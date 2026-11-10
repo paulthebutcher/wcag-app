@@ -1,8 +1,6 @@
 # WCAG Workspace
 
-Internal accessibility workbench with a local React interface, Fastify API and SQLite tracking. The first implementation uses the bundled Popfly sample scans. Live engine integration remains a separate milestone.
-
-The app is a local internal web app for Paul to do client accessibility work: run scans, work through errors, declare fixes and verify them, and leave feedback for engine improvement. It should also be polished enough to show in interviews; there is no separate demo product or public deployment. It talks to the WCAG Engine, which lives in its own repo (`~/Developer/WCAG Scanner`) and will run as its own service.
+Accessibility workbench built with React, Fastify and SQLite. It records sites and tracks findings, fixes and verification results. The WCAG Engine lives in a separate repository. Live scan submission is currently unavailable in the app.
 
 ## Run locally
 
@@ -13,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open [the local workspace](http://127.0.0.1:5173). Both web and API bind to loopback. Popfly seeds automatically once; changes persist in `.data/fixture/app.db`. Restarting does not reset your decisions. No API key is needed and fixture jobs do not scan the internet or call models.
+Open [the local workspace](http://127.0.0.1:5173). The web and API bind to loopback. The workspace starts empty and saves sites in `.data/workspace/app.db`. For local development with recorded Popfly evidence, run `ENGINE_MODE=fixture npm run dev`. That mode uses a separate database in `.data/fixture`.
 
 ```sh
 npm test             # contract, fixture engine, persistence and API tests
@@ -22,9 +20,13 @@ npx playwright install chromium
 npm run test:e2e     # isolated browser workflow and accessibility tests
 ```
 
-Use `PORT` to change the API port, `WEB_PORT` for Vite, `API_URL` for Vite's API proxy, and `WEB_ORIGIN` to trust a changed web origin. `APP_DATA_DIR` overrides the fixture database directory. Configuration is read from process environment; `.env.example` documents it and is not automatically loaded.
+Use `PORT` to change the API port, `WEB_PORT` for Vite, `API_URL` for Vite's API proxy, and `WEB_ORIGIN` to trust a changed web origin. `APP_DATA_DIR` overrides the database directory. Configuration is read from process environment; `.env.example` documents it and is not automatically loaded.
 
-Sample-mode scans replay saved Popfly evidence and are labeled as such. Other sites can be recorded, but their scans are unavailable until HttpEngine is built. PDF download is unavailable until a genuine report asset is supplied. Feedback export records judgments for future engine work; it does not train a model automatically.
+## Deploy to Railway
+
+In the `production` environment, connect one service to the repository root on `main`. The root Dockerfile builds the web UI and serves it from Fastify. Railway provides `PORT` and the generated domain. For a custom domain, set `WEB_ORIGIN` to its HTTPS origin. The repository sets the healthcheck to `/api/health`.
+
+Production starts with an empty workspace and accepts visitors without signing in. To persist changes across deploys, mount a volume at `/data` and set `APP_DATA_DIR=/data/workspace` and `RAILWAY_RUN_UID=0`. Use a fresh directory if an existing volume holds fixture data.
 
 Version control: [paulthebutcher/wcag-app](https://github.com/paulthebutcher/wcag-app). Changes are committed incrementally; GitHub Actions runs checks and browser tests.
 

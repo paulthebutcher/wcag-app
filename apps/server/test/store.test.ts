@@ -6,7 +6,7 @@ const root = resolve(import.meta.dirname, '../../..');
 const fixtures = loadFixtures(root);
 const stores: Store[] = [];
 function fresh() {
-  const s = new Store(':memory:');
+  const s = new Store(':memory:', 'fixture');
   stores.push(s);
   s.seed(fixtures.baseline);
   return s;

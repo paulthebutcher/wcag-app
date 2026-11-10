@@ -164,6 +164,7 @@ function App() {
     kind = kinds.includes(segments[2]) ? segments[2] : 'overview',
     id = kinds.includes(segments[2]) ? segments[3] : undefined;
   const [sites, setSites] = useState<Entity[]>([]),
+    [mode, setMode] = useState<'disabled' | 'fixture'>('disabled'),
     [workspace, setWorkspace] = useState<Workspace | null>(null),
     [loadError, setLoadError] = useState(''),
     [message, setMessage] = useState(''),
@@ -185,8 +186,9 @@ function App() {
     }
   }
   useEffect(() => {
-    api<Entity[]>('/sites')
-      .then((s) => {
+    Promise.all([api<Entity[]>('/sites'), api<{ mode: 'disabled' | 'fixture' }>('/health')])
+      .then(([s, health]) => {
+        setMode(health.mode);
         setSites(s);
         if (location.pathname === '/')
           navigate(s[0] ? `/sites/${s[0].id}` : '/sites/new', { replace: true });
@@ -236,6 +238,7 @@ function App() {
       setBusy(false);
     }
   }
+  const scanAvailable = mode === 'fixture';
   const active = workspace?.scans.find((s) => ['queued', 'running'].includes(s.state));
   const waiting = workspace?.errors.filter((e) => e.status === 'in_progress').length ?? 0;
   const side = (
@@ -308,9 +311,6 @@ function App() {
             <span>Export feedback</span>
           </a>
         )}
-        <div className="local-status">
-          <span /> Local workspace
-        </div>
         <p>Evidence. Action. Verification.</p>
         <div className="profile">
           <span className="avatar">PB</span>
@@ -358,10 +358,12 @@ function App() {
               </>
             )}
           </div>
-          <span className="sample-pill">
-            <span />
-            Sample data
-          </span>
+          {mode === 'fixture' && (
+            <span className="sample-pill">
+              <span />
+              Sample data
+            </span>
+          )}
         </header>
         <main id="main" tabIndex={-1} className="main-content">
           <div className="sr-only" role="status" aria-live="polite">
@@ -383,6 +385,7 @@ function App() {
           )}
           {siteId === 'new' ? (
             <AddSite
+              fixture={mode === 'fixture'}
               onAdded={(s) => {
                 setSites((old) => [...old, s]);
                 navigate(`/sites/${s.id}`);
@@ -392,7 +395,13 @@ function App() {
             id ? (
               <Detail w={workspace} kind={kind} id={id} action={action} busy={busy} />
             ) : kind === 'overview' ? (
-              <Overview w={workspace} action={action} busy={busy} active={active} />
+              <Overview
+                w={workspace}
+                action={action}
+                busy={busy}
+                active={active}
+                scanAvailable={scanAvailable}
+              />
             ) : (
               <>
                 <div className="page-heading">
@@ -411,7 +420,7 @@ function App() {
                       }
                     </p>
                   </div>
-                  {kind === 'scans' && (
+                  {kind === 'scans' && scanAvailable && (
                     <div className="actions">
                       <Button
                         variant="outline"
@@ -441,8 +450,9 @@ function App() {
                 </div>
                 {kind === 'scans' && (
                   <p className="muted small">
-                    Verification re-runs only the checks behind declared fixes. Other problems need
-                    a full rescan.
+                    {scanAvailable
+                      ? 'Verification re-runs only the checks behind declared fixes. Other problems need a full rescan.'
+                      : 'Scanning is currently unavailable.'}
                   </p>
                 )}
                 <EntityList
@@ -475,11 +485,13 @@ function Overview({
   action,
   busy,
   active,
+  scanAvailable,
 }: {
   w: Workspace;
   action: Action;
   busy: boolean;
   active?: Entity;
+  scanAvailable: boolean;
 }) {
   const base = `/sites/${w.site.id}`,
     waiting = w.errors.filter((e) => e.status === 'in_progress').length,
@@ -514,50 +526,58 @@ function Overview({
             {w.pages.length} pages captured
           </p>
         </div>
-        <Button
-          variant="outline"
-          disabled={busy || !!active}
-          onClick={() =>
-            void action('/scans', { kind: 'full' }, 'Full scan queued').catch(() => {})
-          }
-        >
-          <RefreshCw size={16} />
-          {completed.length ? 'Rescan previous pages' : 'Run first scan'}
-        </Button>
+        {scanAvailable && (
+          <Button
+            variant="outline"
+            disabled={busy || !!active}
+            onClick={() =>
+              void action('/scans', { kind: 'full' }, 'Full scan queued').catch(() => {})
+            }
+          >
+            <RefreshCw size={16} />
+            {completed.length ? 'Rescan previous pages' : 'Run first scan'}
+          </Button>
+        )}
       </div>
-      <div className="workflow-banner">
-        <span className="banner-icon">
-          <ScanLine size={25} />
-        </span>
-        <div>
-          <h2>
-            {active
-              ? 'Your scan is in progress'
-              : waiting
-                ? `${waiting} ${waiting === 1 ? 'fix is' : 'fixes are'} ready to verify`
-                : 'A clear path from findings to fixes'}
-          </h2>
-          <p>
-            {active
-              ? `${label(active.state)} · ${active.progress?.phase ?? 'Preparing the recorded scan scenario'}`
-              : waiting
-                ? 'Recheck the original detections and see what changed.'
-                : 'Start with a shared component, review the evidence, then declare your fix.'}
+      {scanAvailable ? (
+        <>
+          <div className="workflow-banner">
+            <span className="banner-icon">
+              <ScanLine size={25} />
+            </span>
+            <div>
+              <h2>
+                {active
+                  ? 'Your scan is in progress'
+                  : waiting
+                    ? `${waiting} ${waiting === 1 ? 'fix is' : 'fixes are'} ready to verify`
+                    : 'A clear path from findings to fixes'}
+              </h2>
+              <p>
+                {active
+                  ? `${label(active.state)} · ${active.progress?.phase ?? 'Preparing the scan'}`
+                  : waiting
+                    ? 'Recheck the original detections and see what changed.'
+                    : 'Start with a shared component, review the evidence, then declare your fix.'}
+              </p>
+            </div>
+            <Button
+              disabled={busy || !!active || !waiting}
+              onClick={() =>
+                void action('/scans', { kind: 'verify' }, 'Verification queued').catch(() => {})
+              }
+            >
+              {active ? <LoaderCircle className="spin" size={16} /> : <Play size={15} />}Scan
+              declared fixes
+            </Button>
+          </div>
+          <p className="helper">
+            Verification checks declared fixes only. Use a full rescan to look for other changes.
           </p>
-        </div>
-        <Button
-          disabled={busy || !!active || !waiting}
-          onClick={() =>
-            void action('/scans', { kind: 'verify' }, 'Verification queued').catch(() => {})
-          }
-        >
-          {active ? <LoaderCircle className="spin" size={16} /> : <Play size={15} />}Scan declared
-          fixes
-        </Button>
-      </div>
-      <p className="helper">
-        Verification checks declared fixes only. Use a full rescan to look for other changes.
-      </p>
+        </>
+      ) : (
+        <p className="helper">Scanning is currently unavailable.</p>
+      )}
       <div className="overview-stats">
         {[
           {
@@ -1969,7 +1989,7 @@ function Detail({
                 <span>
                   {e.coverage?.provenance ??
                     e.coverage?.reason ??
-                    'Missing historical values remain unknown. Recorded fixture outcomes do not establish live coverage.'}
+                    'Missing historical values remain unknown.'}
                 </span>
               </div>
               <dl className="location-list">
@@ -2192,7 +2212,7 @@ function ScanOverview({
           <p className="muted">
             {metadata.timings
               ? 'Recorded timing data is shown below.'
-              : 'Timing details were not included in this fixture.'}
+              : 'Timing details were not recorded.'}
           </p>
           {metadata.timings && (
             <pre className="code-block">{JSON.stringify(metadata.timings, null, 2)}</pre>
@@ -2200,7 +2220,7 @@ function ScanOverview({
           <p className="muted">
             {metadata.model_usage
               ? 'Recorded model usage is shown below.'
-              : 'Model usage was not recorded in this fixture.'}
+              : 'Model usage was not recorded.'}
           </p>
           {metadata.model_usage && (
             <pre className="code-block">{JSON.stringify(metadata.model_usage, null, 2)}</pre>
@@ -2210,7 +2230,7 @@ function ScanOverview({
     </>
   );
 }
-function AddSite({ onAdded }: { onAdded: (s: Entity) => void }) {
+function AddSite({ fixture, onAdded }: { fixture: boolean; onAdded: (s: Entity) => void }) {
   const [name, setName] = useState(''),
     [url, setUrl] = useState(''),
     [error, setError] = useState(''),
@@ -2255,13 +2275,15 @@ function AddSite({ onAdded }: { onAdded: (s: Entity) => void }) {
               placeholder="https://example.com"
             />
           </label>
-          <div className="alert">
-            <Info size={18} />
-            <p>
-              Sample mode uses recorded Popfly scans. Other sites can be saved, but live scanning
-              needs the engine service.
-            </p>
-          </div>
+          {fixture && (
+            <div className="alert">
+              <Info size={18} />
+              <p>
+                Sample mode uses recorded Popfly scans. Other sites can be saved, but live scanning
+                needs the engine service.
+              </p>
+            </div>
+          )}
           {error && (
             <p className="text-error" role="alert">
               {error}

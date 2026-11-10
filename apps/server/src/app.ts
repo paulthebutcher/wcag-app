@@ -1,10 +1,11 @@
 import Fastify from 'fastify';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
-import { readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { z } from 'zod';
 import { Store, AppError, type Row, type Status } from './store.js';
 import { FixtureEngine } from './engine.js';
+import { hostedMode } from './hosted.js';
 
 export type AppOptions = {
   root: string;
@@ -12,21 +13,31 @@ export type AppOptions = {
   durationMs?: number;
   enginePersistPath?: string;
   seed?: boolean;
+  engineMode?: 'disabled' | 'fixture';
   pollMs?: number;
 };
 export function createApp(options: AppOptions) {
   const root = resolve(options.root);
-  const dataDir = resolve(process.env.APP_DATA_DIR ?? join(root, '.data', 'fixture'));
-  if (process.env.ENGINE_MODE && process.env.ENGINE_MODE !== 'fixture')
-    throw new Error('Only fixture mode is implemented. HttpEngine is a later milestone.');
-  const store = new Store(options.dbPath ?? join(dataDir, 'app.db'));
-  const engine = new FixtureEngine({
-    root,
-    durationMs: options.durationMs ?? Number(process.env.FIXTURE_DURATION_MS ?? 2500),
-    persistPath: options.enginePersistPath,
-  });
-  if (options.seed !== false) store.seed(engine.baseline);
+  const mode = options.engineMode ?? process.env.ENGINE_MODE ?? 'disabled';
+  if (mode !== 'disabled' && mode !== 'fixture') throw new Error('Unsupported ENGINE_MODE.');
+  const hosted = process.env.HOSTED_MODE === '1';
+  if (hosted && mode === 'fixture') throw new Error('Fixture mode is available only locally.');
+  const dataMode = mode === 'fixture' ? 'fixture' : 'workspace';
+  const dataDir = resolve(process.env.APP_DATA_DIR ?? join(root, '.data', dataMode));
   const app = Fastify({ logger: false, bodyLimit: 256 * 1024 });
+  if (hosted) hostedMode(app, root);
+  const store = new Store(options.dbPath ?? join(dataDir, 'app.db'), dataMode);
+  const engine =
+    mode === 'fixture'
+      ? new FixtureEngine({
+          root,
+          durationMs: options.durationMs ?? Number(process.env.FIXTURE_DURATION_MS ?? 2500),
+          persistPath:
+            options.enginePersistPath ??
+            (options.dbPath ? undefined : join(dataDir, 'engine-jobs.json')),
+        })
+      : undefined;
+  if (engine && options.seed !== false) store.seed(engine.baseline);
   const token = randomUUID();
   const trustedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   const trustedOrigins = new Set([
@@ -37,19 +48,22 @@ export function createApp(options: AppOptions) {
     'http://localhost:4310',
   ]);
   app.addHook('onRequest', async (req, reply) => {
-    const hostname = (req.headers.host ?? '').replace(/:\d+$/, '');
-    if (!trustedHosts.has(hostname))
-      return reply.code(403).send({ error: { message: 'Untrusted host' } });
-    if (req.headers.origin && !trustedOrigins.has(req.headers.origin))
-      return reply.code(403).send({ error: { message: 'Untrusted origin' } });
+    if (!hosted) {
+      const hostname = (req.headers.host ?? '').replace(/:\d+$/, '');
+      if (!trustedHosts.has(hostname))
+        return reply.code(403).send({ error: { message: 'Untrusted host' } });
+      if (req.headers.origin && !trustedOrigins.has(req.headers.origin))
+        return reply.code(403).send({ error: { message: 'Untrusted origin' } });
+    }
     reply.header('Cache-Control', 'no-store');
     reply.header('X-Content-Type-Options', 'nosniff');
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-      const supplied = req.headers['x-session-token'];
+      const header = req.headers['x-session-token'];
+      const supplied = typeof header === 'string' ? Buffer.from(header) : undefined;
       if (
-        typeof supplied !== 'string' ||
+        !supplied ||
         supplied.length !== token.length ||
-        !timingSafeEqual(Buffer.from(supplied), Buffer.from(token))
+        !timingSafeEqual(supplied, Buffer.from(token))
       )
         return reply
           .code(403)
@@ -71,7 +85,7 @@ export function createApp(options: AppOptions) {
   const requestId = (b: Row) => (typeof b.request_id === 'string' ? b.request_id : undefined);
   const action = (siteId: string, b: Row, key: string, fn: () => any) =>
     store.action(siteId, requestId(b), { key, ...b }, fn);
-  app.get('/api/health', async () => ({ ok: true, mode: 'fixture', contract_version: '0.2.0' }));
+  app.get('/api/health', async () => ({ ok: true, mode, contract_version: '0.2.0' }));
   app.get('/api/session', async () => ({ token }));
   app.get('/api/sites', async () => store.all('sites'));
   app.post('/api/sites', async (req, reply) => {
@@ -148,6 +162,7 @@ export function createApp(options: AppOptions) {
       .object({ kind: z.enum(['full', 'verify']), request_id: z.string().optional() })
       .parse(req.body);
     const site = store.site(id!);
+    if (!engine) throw new AppError('Scanning is currently unavailable.', 503);
     if (site.url !== engine.baseline.scan.site_url.replace(/\/$/, ''))
       throw new AppError(
         'Sample mode only scans the bundled Popfly site. Live scanning requires HttpEngine.',
@@ -192,6 +207,7 @@ export function createApp(options: AppOptions) {
   app.post('/api/sites/:id/scans/:scanId/retry-import', async (req) => {
     const { id, scanId } = params(req);
     const scan = store.entity(id!, 'scan', scanId!);
+    if (!engine) throw new AppError('Scan import is currently unavailable.', 503);
     if (scan.ingest_state !== 'failed' || !scan.engine_scan_id)
       throw new AppError('This scan has no failed import to retry');
     return store.ingest(id!, engine.getResult(scan.engine_scan_id), scan.id);
@@ -203,22 +219,25 @@ export function createApp(options: AppOptions) {
   app.get('/api/sites/:id/scans/:scanId/report.pdf', async (req) => {
     const { id, scanId } = params(req);
     store.entity(id!, 'scan', scanId!);
-    throw new AppError('No PDF is bundled for this fixture scan', 404);
+    throw new AppError('No PDF is available for this scan', 404);
   });
-  const assetDir = join(root, 'contract', 'fixtures', 'popfly-sample', 'assets');
-  const manifestPath = join(assetDir, 'manifest.json');
-  const manifest = existsSync(manifestPath)
-    ? (JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, Row>)
-    : {};
-  app.get('/api/assets/:assetId', async (req, reply) => {
-    const asset = Object.values(manifest).find((a) => a.asset_id === params(req).assetId);
-    if (!asset || typeof asset.file !== 'string') throw new AppError('Screenshot not found', 404);
-    const path = resolve(assetDir, asset.file);
-    if (!path.startsWith(assetDir + '/')) throw new AppError('Invalid asset path', 400);
-    reply.type('image/png').header('Cache-Control', 'private, max-age=31536000, immutable');
-    return readFileSync(path);
-  });
+  if (engine) {
+    const assetDir = join(root, 'contract', 'fixtures', 'popfly-sample', 'assets');
+    const manifestPath = join(assetDir, 'manifest.json');
+    const manifest = existsSync(manifestPath)
+      ? (JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, Row>)
+      : {};
+    app.get('/api/assets/:assetId', async (req, reply) => {
+      const asset = Object.values(manifest).find((a) => a.asset_id === params(req).assetId);
+      if (!asset || typeof asset.file !== 'string') throw new AppError('Screenshot not found', 404);
+      const path = resolve(assetDir, asset.file);
+      if (!path.startsWith(assetDir + '/')) throw new AppError('Invalid asset path', 400);
+      reply.type('image/png').header('Cache-Control', 'private, max-age=31536000, immutable');
+      return readFileSync(path);
+    });
+  }
   function pump() {
+    if (!engine) return;
     for (const scan of store.all('scans').filter((s) => ['queued', 'running'].includes(s.state))) {
       try {
         const job = scan.engine_job_id
@@ -259,8 +278,8 @@ export function createApp(options: AppOptions) {
       }
     }
   }
-  const timer = setInterval(pump, options.pollMs ?? 500);
-  timer.unref();
+  const timer = engine ? setInterval(pump, options.pollMs ?? 500) : undefined;
+  timer?.unref();
   app.addHook('onClose', async () => {
     clearInterval(timer);
     store.close();

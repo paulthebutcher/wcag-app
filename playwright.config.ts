@@ -22,6 +22,7 @@ export default defineConfig({
       url: 'http://127.0.0.1:4312/api/session',
       env: {
         PORT: '4312',
+        ENGINE_MODE: 'fixture',
         APP_DATA_DIR: mkdtempSync(join(tmpdir(), 'wcag-ui-e2e-')),
         WEB_ORIGIN: 'http://127.0.0.1:5174',
         FIXTURE_DURATION_MS: '300',

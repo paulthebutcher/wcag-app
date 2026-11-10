@@ -95,7 +95,7 @@ function findingContent(f: Row) {
 
 export class Store {
   db: Database.Database;
-  constructor(path: string) {
+  constructor(path: string, dataMode: 'fixture' | 'workspace' = 'workspace') {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path);
     this.db.pragma('foreign_keys = ON');
@@ -136,9 +136,11 @@ export class Store {
     const mode = this.db.prepare('SELECT value FROM settings WHERE key=?').get('mode') as
       | Row
       | undefined;
-    if (mode && mode.value !== 'fixture')
-      throw new AppError('Database belongs to a different engine mode', 409);
-    this.db.prepare('INSERT OR IGNORE INTO settings VALUES (?,?)').run('mode', 'fixture');
+    if (mode && mode.value !== dataMode) {
+      this.db.close();
+      throw new AppError('Database belongs to a different workspace mode', 409);
+    }
+    this.db.prepare('INSERT OR IGNORE INTO settings VALUES (?,?)').run('mode', dataMode);
   }
   close() {
     this.db.close();

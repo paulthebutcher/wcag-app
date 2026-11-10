@@ -1,0 +1,12 @@
+.git
+.github
+**/node_modules
+**/dist
+.data
+.env
+.env.*
+*.patch
+playwright-report
+test-results
+.DS_Store
+contract/fixtures

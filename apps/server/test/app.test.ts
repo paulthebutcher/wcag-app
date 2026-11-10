@@ -4,7 +4,7 @@ import { createApp } from '../src/app.js';
 const apps: ReturnType<typeof createApp>[] = [];
 const root = resolve(import.meta.dirname, '../../..');
 function fresh() {
-  const a = createApp({ root, dbPath: ':memory:', durationMs: 1 });
+  const a = createApp({ root, dbPath: ':memory:', durationMs: 1, engineMode: 'fixture' });
   apps.push(a);
   return a;
 }
@@ -13,6 +13,34 @@ afterEach(async () => {
 });
 const headers = { host: '127.0.0.1:4310' };
 describe('local API', () => {
+  it('opens an empty workspace without fixture files and creates no simulated scans', async () => {
+    const workspace = createApp({
+      root: resolve(root, 'missing-fixture-root'),
+      dbPath: ':memory:',
+      engineMode: 'disabled',
+    });
+    apps.push(workspace);
+    const { app, store } = workspace;
+    expect((await app.inject({ url: '/api/sites', headers })).json()).toEqual([]);
+    const token = (await app.inject({ url: '/api/session', headers })).json().token;
+    const mutationHeaders = { ...headers, 'x-session-token': token };
+    const created = await app.inject({
+      method: 'POST',
+      url: '/api/sites',
+      headers: mutationHeaders,
+      payload: { name: 'Production site', url: 'https://example.test' },
+    });
+    expect(created.statusCode).toBe(201);
+    const attempted = await app.inject({
+      method: 'POST',
+      url: `/api/sites/${created.json().id}/scans`,
+      headers: mutationHeaders,
+      payload: { kind: 'full' },
+    });
+    expect(attempted.statusCode).toBe(503);
+    expect(store.all('scans')).toEqual([]);
+  });
+
   it('seeds the workspace and enforces local origin/token on writes', async () => {
     const { app } = fresh();
     const w = await app.inject({ url: '/api/sites/popfly/workspace', headers });
