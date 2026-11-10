@@ -1,4 +1,6 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { createApp } from '../src/app.js';
 const apps: ReturnType<typeof createApp>[] = [];
@@ -120,7 +122,7 @@ describe('local API', () => {
     });
     expect(response.statusCode, response.body).toBe(200);
     await new Promise((r) => setTimeout(r, 125));
-    pump();
+    await pump();
     const s = store.get('scans', 'verify-subset');
     expect(s?.state, JSON.stringify(s)).toBe('completed');
     expect(store.all('scan_changes').filter((c) => c.scan_id === 'verify-subset')).toHaveLength(1);
@@ -152,10 +154,53 @@ describe('local API', () => {
     store.setStatus('popfly', e.id, 'in_progress');
     const scan = store.prepareScan('popfly', 'verify', 'crash-before-post');
     expect(engine.getJobByRequest(scan.id)).toBeNull();
-    pump();
+    await pump();
     expect(engine.getJobByRequest(scan.id)).not.toBeNull();
     await new Promise((r) => setTimeout(r, 125));
-    pump();
+    await pump();
     expect(store.get('scans', scan.id)?.state).toBe('completed');
   });
+});
+
+it('requires operator sign-in for the hosted live workspace', async () => {
+  const hostedRoot = mkdtempSync(resolve(tmpdir(), 'wcag-hosted-app-'));
+  try {
+    const webDist = resolve(hostedRoot, 'apps/web/dist');
+    mkdirSync(webDist, { recursive: true });
+    writeFileSync(resolve(webDist, 'index.html'), '<title>Workspace</title>');
+    vi.stubEnv('HOSTED_MODE', '1');
+    vi.stubEnv('WEB_ORIGIN', 'https://workspace.example.test');
+    vi.stubEnv('ENGINE_URL', 'http://engine.railway.internal:4311');
+    vi.stubEnv('ENGINE_TOKEN', 'test-token-test-token-test-token-test-token');
+    vi.stubEnv('APP_OPERATOR_AUTH', undefined);
+    const options = { root: hostedRoot, dbPath: ':memory:', engineMode: 'http' as const };
+    expect(() => createApp(options)).toThrow('Hosted scans require APP_OPERATOR_AUTH.');
+    const credential = 'operator:test-password-for-hosted-workspace';
+    vi.stubEnv('APP_OPERATOR_AUTH', credential);
+    const workspace = createApp(options);
+    apps.push(workspace);
+    const host = { host: 'workspace.example.test' };
+    for (const url of ['/', '/api/session', '/api/sites', '/api/assets/private']) {
+      const response = await workspace.app.inject({ url, headers: host });
+      expect(response.statusCode).toBe(401);
+      expect(response.headers['www-authenticate']).toMatch(/^Basic /);
+    }
+    const authorized = {
+      ...host,
+      authorization: 'Basic ' + Buffer.from(credential).toString('base64'),
+    };
+    expect((await workspace.app.inject({ url: '/', headers: authorized })).statusCode).toBe(200);
+    expect(
+      (await workspace.app.inject({ url: '/api/session', headers: authorized })).statusCode,
+    ).toBe(200);
+    const health = await workspace.app.inject({
+      url: '/api/health',
+      headers: { host: 'healthcheck.railway.app' },
+    });
+    expect(health.statusCode).toBe(200);
+    expect(health.json().mode).toBe('http');
+  } finally {
+    vi.unstubAllEnvs();
+    rmSync(hostedRoot, { recursive: true, force: true });
+  }
 });

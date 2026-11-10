@@ -1,8 +1,16 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 
 export function hostedMode(app: FastifyInstance, root: string) {
+  const operator = process.env.APP_OPERATOR_AUTH;
+  if (operator !== undefined && !/^[^:]+:.{16,}$/.test(operator))
+    throw new Error(
+      'APP_OPERATOR_AUTH requires a username and a password of at least 16 characters.',
+    );
+  const digest = (value: Buffer) => createHash('sha256').update(value).digest();
+  const expected = operator ? digest(Buffer.from(operator)) : undefined;
   const publicDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
   const configuredOrigin = process.env.WEB_ORIGIN ?? (publicDomain && `https://${publicDomain}`);
   const origin = configuredOrigin ? new URL(configuredOrigin) : undefined;
@@ -28,6 +36,13 @@ export function hostedMode(app: FastifyInstance, root: string) {
       return reply.code(403).send({ error: { message: 'Untrusted host' } });
     if (req.headers.origin && req.headers.origin !== origin?.origin)
       return reply.code(403).send({ error: { message: 'Untrusted origin' } });
+    if (!expected || healthcheck) return;
+    const encoded = req.headers.authorization?.match(/^Basic ([A-Za-z0-9+/]+=*)$/i)?.[1];
+    if (!encoded || !timingSafeEqual(digest(Buffer.from(encoded, 'base64')), expected))
+      return reply
+        .header('WWW-Authenticate', 'Basic realm="WCAG Workspace", charset="UTF-8"')
+        .code(401)
+        .send({ error: { message: 'Sign in to WCAG Workspace' } });
   });
 
   app.get<{ Params: { filename: string } }>('/assets/:filename', async (req, reply) => {

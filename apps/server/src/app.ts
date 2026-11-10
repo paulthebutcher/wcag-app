@@ -4,7 +4,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { z } from 'zod';
 import { Store, AppError, type Row, type Status } from './store.js';
-import { FixtureEngine } from './engine.js';
+import { EngineError, FixtureEngine } from './engine.js';
+import { HttpEngine } from './http-engine.js';
 import { hostedMode } from './hosted.js';
 
 export type AppOptions = {
@@ -13,21 +14,28 @@ export type AppOptions = {
   durationMs?: number;
   enginePersistPath?: string;
   seed?: boolean;
-  engineMode?: 'disabled' | 'fixture';
+  engineMode?: 'disabled' | 'fixture' | 'http';
   pollMs?: number;
 };
 export function createApp(options: AppOptions) {
   const root = resolve(options.root);
   const mode = options.engineMode ?? process.env.ENGINE_MODE ?? 'disabled';
-  if (mode !== 'disabled' && mode !== 'fixture') throw new Error('Unsupported ENGINE_MODE.');
+  if (mode !== 'disabled' && mode !== 'fixture' && mode !== 'http')
+    throw new Error('Unsupported ENGINE_MODE.');
   const hosted = process.env.HOSTED_MODE === '1';
   if (hosted && mode === 'fixture') throw new Error('Fixture mode is available only locally.');
+  if (hosted && mode === 'http' && !process.env.APP_OPERATOR_AUTH)
+    throw new Error('Hosted scans require APP_OPERATOR_AUTH.');
+  const liveEngine =
+    mode === 'http'
+      ? new HttpEngine(process.env.ENGINE_URL ?? '', process.env.ENGINE_TOKEN ?? '', hosted)
+      : undefined;
   const dataMode = mode === 'fixture' ? 'fixture' : 'workspace';
   const dataDir = resolve(process.env.APP_DATA_DIR ?? join(root, '.data', dataMode));
   const app = Fastify({ logger: false, bodyLimit: 256 * 1024 });
   if (hosted) hostedMode(app, root);
   const store = new Store(options.dbPath ?? join(dataDir, 'app.db'), dataMode);
-  const engine =
+  const fixtureEngine =
     mode === 'fixture'
       ? new FixtureEngine({
           root,
@@ -37,7 +45,8 @@ export function createApp(options: AppOptions) {
             (options.dbPath ? undefined : join(dataDir, 'engine-jobs.json')),
         })
       : undefined;
-  if (engine && options.seed !== false) store.seed(engine.baseline);
+  const engine = liveEngine ?? fixtureEngine;
+  if (fixtureEngine && options.seed !== false) store.seed(fixtureEngine.baseline);
   const token = randomUUID();
   const trustedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   const trustedOrigins = new Set([
@@ -77,7 +86,7 @@ export function createApp(options: AppOptions) {
       return reply.code(400).send({
         error: { message: err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') },
       });
-    const status = (err as any).statusCode ?? 400;
+    const status = err instanceof EngineError ? err.statusCode : ((err as any).statusCode ?? 400);
     reply.code(status).send({ error: { message: (err as Error).message } });
   });
   const params = (req: any) => req.params as Record<string, string>;
@@ -100,7 +109,7 @@ export function createApp(options: AppOptions) {
     return reply.code(201).send(site);
   });
   app.get('/api/sites/:id/workspace', async (req) => {
-    pump();
+    if (fixtureEngine) await pump();
     return store.workspace(params(req).id!);
   });
   app.post('/api/sites/:id/errors/:errorId/status', async (req) => {
@@ -163,28 +172,21 @@ export function createApp(options: AppOptions) {
       .parse(req.body);
     const site = store.site(id!);
     if (!engine) throw new AppError('Scanning is currently unavailable.', 503);
-    if (site.url !== engine.baseline.scan.site_url.replace(/\/$/, ''))
+    if (fixtureEngine && site.url !== fixtureEngine.baseline.scan.site_url.replace(/\/$/, ''))
       throw new AppError(
         'Sample mode only scans the bundled Popfly site. Live scanning requires HttpEngine.',
         422,
       );
-    const saved = action(id!, b, 'scan', () => store.prepareScan(id!, b.kind, b.request_id));
-    const scan = store.get('scans', saved.id)!;
-    if (!scan.engine_job_id && scan.state === 'queued') {
-      try {
-        const job = engine.submit(scan.request_payload as any);
-        scan.engine_job_id = job.job_id;
-        store.put('scans', scan);
-      } catch (error) {
-        scan.state = 'failed';
-        scan.failure_stage = 'submission';
-        scan.failure_message = (error as Error).message;
-        store.put('scans', scan);
-        throw error;
-      }
-    }
-    pump();
-    return store.get('scans', scan.id);
+    const prior = b.request_id ? store.get('scans', b.request_id) : undefined;
+    const health = liveEngine && !prior ? await liveEngine.health() : undefined;
+    if (health && site.identity_version && site.identity_version !== health.identity_version)
+      throw new AppError('The scan engine uses an incompatible identity version.', 409);
+    const saved = action(id!, b, 'scan', () =>
+      store.prepareScan(id!, b.kind, b.request_id, health?.identity_version),
+    );
+    if (fixtureEngine) await pump();
+    else void pump().catch((error) => app.log.error(error));
+    return store.get('scans', saved.id);
   });
   app.post('/api/sites/:id/scans/:scanId/read', async (req) => {
     const { id, scanId } = params(req);
@@ -210,18 +212,33 @@ export function createApp(options: AppOptions) {
     if (!engine) throw new AppError('Scan import is currently unavailable.', 503);
     if (scan.ingest_state !== 'failed' || !scan.engine_scan_id)
       throw new AppError('This scan has no failed import to retry');
-    return store.ingest(id!, engine.getResult(scan.engine_scan_id), scan.id);
+    return store.ingest(id!, await engine.getResult(scan.engine_scan_id), scan.id);
   });
   app.get('/api/sites/:id/feedback', async (req, reply) => {
     reply.header('Content-Disposition', 'attachment; filename="wcag-feedback.json"');
     return store.feedback(params(req).id!);
   });
-  app.get('/api/sites/:id/scans/:scanId/report.pdf', async (req) => {
+  app.get('/api/sites/:id/scans/:scanId/report.pdf', async (req, reply) => {
     const { id, scanId } = params(req);
-    store.entity(id!, 'scan', scanId!);
-    throw new AppError('No PDF is available for this scan', 404);
+    const scan = store.entity(id!, 'scan', scanId!);
+    if (!liveEngine || scan.state !== 'completed' || !scan.engine_scan_id)
+      throw new AppError('No PDF is available for this scan', 404);
+    const media = await liveEngine.report(scan.engine_scan_id);
+    return reply.type(media.type).send(media.stream);
   });
-  if (engine) {
+  if (liveEngine) {
+    app.get('/api/assets/:assetId', async (req, reply) => {
+      const id = params(req).assetId!;
+      if (!store.all('page_snapshots').some((snapshot) => snapshot.screenshot_asset_id === id))
+        throw new AppError('Screenshot not found', 404);
+      const media = await liveEngine.screenshot(id);
+      return reply
+        .type(media.type)
+        .header('Cache-Control', 'private, max-age=31536000, immutable')
+        .send(media.stream);
+    });
+  }
+  if (fixtureEngine) {
     const assetDir = join(root, 'contract', 'fixtures', 'popfly-sample', 'assets');
     const manifestPath = join(assetDir, 'manifest.json');
     const manifest = existsSync(manifestPath)
@@ -236,26 +253,30 @@ export function createApp(options: AppOptions) {
       return readFileSync(path);
     });
   }
-  function pump() {
+  async function runPump() {
     if (!engine) return;
     for (const scan of store.all('scans').filter((s) => ['queued', 'running'].includes(s.state))) {
       try {
         const job = scan.engine_job_id
-          ? engine.getJob(scan.engine_job_id)
-          : (engine.getJobByRequest(scan.id) ?? engine.submit(scan.request_payload));
-        if (!job) continue;
+          ? await engine.getJob(scan.engine_job_id)
+          : ((await engine.getJobByRequest(scan.id)) ??
+            (await engine.submit(scan.request_payload)));
+        if (job.request_id !== scan.id)
+          throw new AppError('The engine returned a job for a different request.', 502);
         scan.engine_job_id = job.job_id;
         scan.progress = job.progress;
         scan.state = job.state;
-        scan.started_at = (job as any).started_at ?? scan.started_at;
-        if (job.state === 'completed' && job.scan_id) {
+        scan.started_at = job.started_at ?? scan.started_at;
+        if (job.state === 'completed') {
+          if (!job.scan_id) throw new AppError('The completed engine job has no scan ID.', 502);
           scan.engine_scan_id = job.scan_id;
           scan.state = 'running';
           scan.ingest_state = 'importing';
           store.put('scans', scan);
           try {
-            store.ingest(scan.site_id, engine.getResult(job.scan_id), scan.id);
+            store.ingest(scan.site_id, await engine.getResult(job.scan_id), scan.id);
           } catch (error) {
+            if (error instanceof EngineError && error.retryable) throw error;
             scan.state = 'failed';
             scan.ingest_state = 'failed';
             scan.failure_stage = 'ingest';
@@ -265,23 +286,38 @@ export function createApp(options: AppOptions) {
         } else {
           if (job.state === 'failed') {
             scan.failure_stage = 'engine';
-            scan.failure_message =
-              typeof job.error === 'string' ? job.error : JSON.stringify(job.error);
+            scan.failure_message = job.error?.message ?? 'The scan failed.';
           }
           store.put('scans', scan);
         }
       } catch (error) {
-        scan.state = 'failed';
-        scan.failure_stage = 'engine';
-        scan.failure_message = (error as Error).message;
+        if (error instanceof EngineError && error.retryable) {
+          scan.progress = { phase: 'Waiting for the scan engine' };
+        } else {
+          scan.state = 'failed';
+          scan.failure_stage = scan.engine_job_id ? 'engine' : 'submission';
+          scan.failure_message = (error as Error).message;
+        }
         store.put('scans', scan);
       }
     }
   }
-  const timer = engine ? setInterval(pump, options.pollMs ?? 500) : undefined;
+  let activePump: Promise<void> | undefined;
+  function pump() {
+    return (activePump ??= runPump().finally(() => {
+      activePump = undefined;
+    }));
+  }
+  const timer = engine
+    ? setInterval(
+        () => void pump().catch((error) => app.log.error(error)),
+        options.pollMs ?? (liveEngine ? 2000 : 500),
+      )
+    : undefined;
   timer?.unref();
   app.addHook('onClose', async () => {
     clearInterval(timer);
+    await activePump;
     store.close();
   });
   return { app, store, engine, pump };

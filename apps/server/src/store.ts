@@ -389,7 +389,12 @@ export class Store {
       }
     return { count };
   }
-  prepareScan(siteId: string, kind: 'full' | 'verify', requestId: string = randomUUID()): Row {
+  prepareScan(
+    siteId: string,
+    kind: 'full' | 'verify',
+    requestId: string = randomUUID(),
+    identityVersion?: string,
+  ): Row {
     const site = this.site(siteId);
     const active = this.all('scans', siteId).find(
       (s) => ['queued', 'running'].includes(s.state) || s.ingest_state === 'failed',
@@ -415,7 +420,7 @@ export class Store {
       request_id: requestId,
       site_id: siteId,
       site_url: site.url,
-      expected_identity_version: site.identity_version,
+      expected_identity_version: site.identity_version ?? identityVersion,
       kind,
       options: {
         max_pages: 50,
@@ -456,9 +461,9 @@ export class Store {
   ingest(siteId: string, input: ScanBundle, scanId?: string): Row {
     const site = this.site(siteId);
     const pending = scanId ? this.get('scans', scanId) : undefined;
-    const parsed = validateBundle(input, {
-      ...(site.identity_version ? { expectedIdentityVersion: site.identity_version } : {}),
-    });
+    const identityVersion =
+      site.identity_version ?? pending?.request_payload?.expected_identity_version;
+    const parsed = validateBundle(input, { expectedIdentityVersion: identityVersion ?? undefined });
     const expectedTargets =
       pending?.request_payload?.kind === 'verify'
         ? pending.request_payload.targets

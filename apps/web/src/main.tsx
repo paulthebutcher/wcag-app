@@ -164,7 +164,7 @@ function App() {
     kind = kinds.includes(segments[2]) ? segments[2] : 'overview',
     id = kinds.includes(segments[2]) ? segments[3] : undefined;
   const [sites, setSites] = useState<Entity[]>([]),
-    [mode, setMode] = useState<'disabled' | 'fixture'>('disabled'),
+    [mode, setMode] = useState<'disabled' | 'fixture' | 'http'>('disabled'),
     [workspace, setWorkspace] = useState<Workspace | null>(null),
     [loadError, setLoadError] = useState(''),
     [message, setMessage] = useState(''),
@@ -186,7 +186,10 @@ function App() {
     }
   }
   useEffect(() => {
-    Promise.all([api<Entity[]>('/sites'), api<{ mode: 'disabled' | 'fixture' }>('/health')])
+    Promise.all([
+      api<Entity[]>('/sites'),
+      api<{ mode: 'disabled' | 'fixture' | 'http' }>('/health'),
+    ])
       .then(([s, health]) => {
         setMode(health.mode);
         setSites(s);
@@ -238,8 +241,11 @@ function App() {
       setBusy(false);
     }
   }
-  const scanAvailable = mode === 'fixture';
+  const scanAvailable = mode !== 'disabled';
   const active = workspace?.scans.find((s) => ['queued', 'running'].includes(s.state));
+  const hasFullScan = workspace?.scans.some(
+    (scan) => scan.kind === 'full' && scan.state === 'completed',
+  );
   const waiting = workspace?.errors.filter((e) => e.status === 'in_progress').length ?? 0;
   const side = (
     <>
@@ -432,7 +438,7 @@ function App() {
                         }
                       >
                         <RefreshCw size={16} />
-                        Rescan previous pages
+                        {hasFullScan ? 'Rescan previous pages' : 'Run first scan'}
                       </Button>
                       <Button
                         disabled={busy || !!active || !waiting}
@@ -1499,15 +1505,13 @@ function Detail({
             </a>
           </Button>
         )}
-        {kind === 'scans' && (
-          <Tooltip text="No PDF is bundled with this recorded scan">
-            <span tabIndex={0}>
-              <Button variant="outline" disabled>
-                <Download size={16} />
-                Export engine PDF
-              </Button>
-            </span>
-          </Tooltip>
+        {kind === 'scans' && e.state === 'completed' && e.provenance?.kind === 'engine' && (
+          <Button asChild variant="outline">
+            <a href={`/api/sites/${w.site.id}/scans/${id}/report.pdf`} download>
+              <Download size={16} />
+              Export engine PDF
+            </a>
+          </Button>
         )}
       </div>
       <Tabs.Root
@@ -2203,7 +2207,7 @@ function ScanOverview({
                 : 'Not recorded'}
             </dd>
             <dt>Report</dt>
-            <dd>PDF not bundled. Engine reports exclude app statuses, notes and reviews.</dd>
+            <dd>Engine reports exclude app statuses, notes and reviews.</dd>
           </dl>
         </div>
       </Panel>

@@ -17,8 +17,13 @@ export interface Job {
   job_id: string;
   request_id: string;
   state: 'queued' | 'running' | 'completed' | 'failed';
-  queue_position: number;
-  progress: { phase: string; pages_done: number; pages_total: number };
+  queue_position: number | null;
+  progress: {
+    phase: string;
+    message?: string;
+    pages_done: number | null;
+    pages_total: number | null;
+  } | null;
   scan_id: string | null;
   error: { code: string; message: string; retryable: boolean } | null;
   requested_at: string;
@@ -26,16 +31,17 @@ export interface Job {
   completed_at: string | null;
 }
 export interface EngineClient {
-  submit(request: JobRequest): Job;
-  getJob(jobId: string): Job;
-  getJobByRequest(requestId: string): Job | null;
-  getResult(scanId: string): ScanBundle;
+  submit(request: JobRequest): Job | Promise<Job>;
+  getJob(jobId: string): Job | Promise<Job>;
+  getJobByRequest(requestId: string): Job | null | Promise<Job | null>;
+  getResult(scanId: string): ScanBundle | Promise<ScanBundle>;
 }
 export class EngineError extends Error {
   constructor(
     public code: string,
     message: string,
     public statusCode = 422,
+    public retryable = false,
   ) {
     super(message);
   }
