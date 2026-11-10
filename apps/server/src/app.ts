@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path';
 import { z } from 'zod';
 import { Store, AppError, type Row, type Status } from './store.js';
 import { FixtureEngine } from './engine.js';
+import { hostedMode } from './hosted.js';
 
 export type AppOptions = {
   root: string;
@@ -19,6 +20,9 @@ export function createApp(options: AppOptions) {
   const dataDir = resolve(process.env.APP_DATA_DIR ?? join(root, '.data', 'fixture'));
   if (process.env.ENGINE_MODE && process.env.ENGINE_MODE !== 'fixture')
     throw new Error('Only fixture mode is implemented. HttpEngine is a later milestone.');
+  const app = Fastify({ logger: false, bodyLimit: 256 * 1024 });
+  const hosted = process.env.HOSTED_MODE === '1';
+  if (hosted) hostedMode(app, root);
   const store = new Store(options.dbPath ?? join(dataDir, 'app.db'));
   const engine = new FixtureEngine({
     root,
@@ -26,7 +30,6 @@ export function createApp(options: AppOptions) {
     persistPath: options.enginePersistPath,
   });
   if (options.seed !== false) store.seed(engine.baseline);
-  const app = Fastify({ logger: false, bodyLimit: 256 * 1024 });
   const token = randomUUID();
   const trustedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   const trustedOrigins = new Set([
@@ -37,19 +40,22 @@ export function createApp(options: AppOptions) {
     'http://localhost:4310',
   ]);
   app.addHook('onRequest', async (req, reply) => {
-    const hostname = (req.headers.host ?? '').replace(/:\d+$/, '');
-    if (!trustedHosts.has(hostname))
-      return reply.code(403).send({ error: { message: 'Untrusted host' } });
-    if (req.headers.origin && !trustedOrigins.has(req.headers.origin))
-      return reply.code(403).send({ error: { message: 'Untrusted origin' } });
+    if (!hosted) {
+      const hostname = (req.headers.host ?? '').replace(/:\d+$/, '');
+      if (!trustedHosts.has(hostname))
+        return reply.code(403).send({ error: { message: 'Untrusted host' } });
+      if (req.headers.origin && !trustedOrigins.has(req.headers.origin))
+        return reply.code(403).send({ error: { message: 'Untrusted origin' } });
+    }
     reply.header('Cache-Control', 'no-store');
     reply.header('X-Content-Type-Options', 'nosniff');
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-      const supplied = req.headers['x-session-token'];
+      const header = req.headers['x-session-token'];
+      const supplied = typeof header === 'string' ? Buffer.from(header) : undefined;
       if (
-        typeof supplied !== 'string' ||
+        !supplied ||
         supplied.length !== token.length ||
-        !timingSafeEqual(Buffer.from(supplied), Buffer.from(token))
+        !timingSafeEqual(supplied, Buffer.from(token))
       )
         return reply
           .code(403)
