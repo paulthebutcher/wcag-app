@@ -1,0 +1,1370 @@
+{
+  "contract_version": "0.1.0-provisional",
+  "scan": {
+    "scan_id": "69271047-f1b0-4813-9cdb-32ff79817d0c",
+    "site_url": "https://www.popfly.com",
+    "platform": "webflow",
+    "started_at": "2026-10-11T02:37:01.516Z",
+    "completed_at": "2026-10-11T02:38:15.778Z",
+    "kind": "verify",
+    "baseline_scan_id": "e779c8b0-03f2-44fd-87cc-b960bc230785",
+    "engine_version": "0.1.0",
+    "detection_manifest": {
+      "engine_version": "0.1.0",
+      "axe_core_version": "4.11.1",
+      "axe_disabled_rules": [],
+      "active_tiers": [
+        1,
+        3
+      ],
+      "api_key_present": true,
+      "semantic_checks": [
+        "alt-text",
+        "link-text",
+        "headings",
+        "landmark-labels",
+        "widget-aria",
+        "table-structure",
+        "duplicate-links",
+        "consistent-nav"
+      ]
+    },
+    "excluded_pages": []
+  },
+  "pages": [
+    {
+      "page_key": "1e9d1485002d293d",
+      "url": "https://www.popfly.com/archive/terms-of-service",
+      "title": "Popfly Terms of Service",
+      "captured_at": "2026-10-11T02:37:06.981Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-0.png",
+      "template_key": "archive"
+    },
+    {
+      "page_key": "fefe049c53c63b21",
+      "url": "https://www.popfly.com/archive/privacy",
+      "title": "Privacy Policy | Popfly",
+      "captured_at": "2026-10-11T02:37:06.982Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-1.png",
+      "template_key": "archive"
+    },
+    {
+      "page_key": "806a19e036916d9a",
+      "url": "https://www.popfly.com/brands/discover",
+      "title": "Find Creators for Outdoor Brands with Popfly Marketplace",
+      "captured_at": "2026-10-11T02:37:16.173Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-9.png",
+      "template_key": "brands"
+    },
+    {
+      "page_key": "0fee0dca15e0ac1d",
+      "url": "https://www.popfly.com/brands/centralize",
+      "title": "Centralize Creator Marketing Workflows for Brands | Popfly",
+      "captured_at": "2026-10-11T02:37:16.173Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-10.png",
+      "template_key": "brands"
+    },
+    {
+      "page_key": "99b0bee052acee61",
+      "url": "https://www.popfly.com/case-studies",
+      "title": "Case Studies | Popfly",
+      "captured_at": "2026-10-11T02:37:18.136Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-12.png",
+      "template_key": null
+    },
+    {
+      "page_key": "4ce2f57113ece309",
+      "url": "https://www.popfly.com/",
+      "title": "Popfly | Outdoor Influencer & UGC Marketing Platform",
+      "captured_at": "2026-10-11T02:37:20.270Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-15.png",
+      "template_key": null
+    },
+    {
+      "page_key": "b0f6785691dec60c",
+      "url": "https://www.popfly.com/insights",
+      "title": "Popfly Insights",
+      "captured_at": "2026-10-11T02:37:29.336Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-26.png",
+      "template_key": null
+    },
+    {
+      "page_key": "c00a50480e898f77",
+      "url": "https://www.popfly.com/platform/affiliate-program",
+      "title": "Creator Affiliate Program & Performance App | Popfly",
+      "captured_at": "2026-10-11T02:37:38.924Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-37.png",
+      "template_key": "platform"
+    },
+    {
+      "page_key": "708e81645e10ec6a",
+      "url": "https://www.popfly.com/platform/travel-tourism",
+      "title": "Creator Marketing for Travel & Tourism | Popfly \u2014 Turn UGC Into Bookings",
+      "captured_at": "2026-10-11T02:37:44.781Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-42.png",
+      "template_key": "platform"
+    },
+    {
+      "page_key": "7fa08a2f0da831cb",
+      "url": "https://www.popfly.com/running",
+      "title": "Find Vetted Running Creators | Popfly",
+      "captured_at": "2026-10-11T02:37:47.809Z",
+      "screenshot_url": "/screenshots/69271047-f1b0-4813-9cdb-32ff79817d0c/page-43.png",
+      "template_key": null
+    }
+  ],
+  "verify": [
+    {
+      "error_key": "21b43688e3551ad2",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "b0b25d321ad1eb9f",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "70fa252c57335606",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "f65d76c6c262531c",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "05ad4452a9256c3f",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "dfc6f25e7f5b18cd",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "a92060ab60c54746",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "5d5680195a6f6b69",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "4095ab584df44356",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "aa9530a3a37ac11c",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "eeb59321c5ce7cf9",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "de525d92eda94076",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "4e2566bb4de8064f",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "33ee78d9a662c409",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "ffdf6acba0789eed",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "76b59070c93caca0",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "39a338b64b750eaa",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "f432d92f3e44ad39",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "54db6fd65f4c58f1",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "78d8256f1653d9ae",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "6d89994b676e4445",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "787adbb1ce31c6e3",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "ad8ac160b5ec11de",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "bd73af5d4a2c80af",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "5d5aa3e41df71a44",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "ed7de6fb8d0a1f37",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "59fb710b3ec0281d",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "2a9c6eccb02f56fa",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "c8954adf400e8b9d",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "ad2ad6dbcd262680",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "88918cc92b1a476f",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "5183d4890bdf1e62",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "d314ef70d947319d",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "65ab0ec12e2aa4a2",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "5a91c7c9b2c8de15",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "d974da2627fbd4b6",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "5f1d78f425f30c83",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "4781b88616296891",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "814e0e259a53d2d8",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "5621c7524d272c73",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "59072524736a0fcd",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "1c8dd5444a162d26",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "974444bdd5eb8aad",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "62b6395bcf7bba6b",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "6e51651d3ce86719",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "c1bdac0e7dd9554f",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "ad2d328343d89686",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "6428ba31174eb537",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "54bf5870ec7df787",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "a0537668ef3319b9",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "97eeb11d143a8473",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "d72f39f37fcff811",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "26c408e3fc8f7449",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "e2b0e71d82ed0072",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "d052b549ba3bc144",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "2fe0658e7bc24df9",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "57ceb6b765b87937",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "ae1061aeb366879d",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "2dec38a26409f442",
+      "outcome": "not_detected",
+      "reason": null
+    },
+    {
+      "error_key": "2054fe98dfb054e1",
+      "outcome": "detected",
+      "reason": null
+    },
+    {
+      "error_key": "11390efdfb13fb5a",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "676e28b6fa3833b4",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "9efd038db521de6e",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "1f3039f45ed89b4b",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "f8d56dfe11f096c2",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "35a235a37e0f03d3",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "466207fbf763cc63",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "1b35a459c6d5fcdd",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "48d73d981f8e172f",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    },
+    {
+      "error_key": "768b763c16517919",
+      "outcome": "not_checked",
+      "reason": "check not included in this verify run"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "3cca4773-8881-4345-85b7-92351fa202cb",
+      "error_key": "f65d76c6c262531c",
+      "component_key": "36bb3a80639d",
+      "page_key": "806a19e036916d9a",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".testimonial",
+        "html": "<p class=\"p-gray-large testimonial\">Popfly delivered creator content that felt truly authentic to our audience that was visually on par with our 6- to 7-figure shoots. A rare and invaluable combination.\"</p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "4c27c94f-7dd3-4f80-b907-814b7bd1f2ae",
+      "error_key": "05ad4452a9256c3f",
+      "component_key": "8ec0fb2df499",
+      "page_key": "806a19e036916d9a",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".testimonial-single-wrap > .extra-pad.p-gray-large",
+        "html": "<p class=\"p-gray-large extra-pad\">Paul Meyers<br>Sr. Manager, Digital &amp; Social, Hyundai</p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "588da269-0336-4947-a9ef-20511c940a10",
+      "error_key": "787adbb1ce31c6e3",
+      "component_key": "8ec0fb2df499",
+      "page_key": "0fee0dca15e0ac1d",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".c-wrapper-title > .extra-pad.p-gray-large",
+        "html": "<p class=\"p-gray-large extra-pad\">Everything you need to run a successful creator program\u2013 in one place. No more scattered spreadsheets, emails or decks. </p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "63d3fe0a-29ec-4edc-8106-a6db6bd5ad0d",
+      "error_key": "ad8ac160b5ec11de",
+      "component_key": "36bb3a80639d",
+      "page_key": "0fee0dca15e0ac1d",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".testimonial",
+        "html": "<p class=\"p-gray-large testimonial\">Popfly has been a crucial component for the way we showcase our brand across all of our marketing attribution channels. Their team is professional, experts in their category, down to earth, and so easy to work with.\"</p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "0b0585d5-362b-4eae-8dfc-e17e2b70c06f",
+      "error_key": "bd73af5d4a2c80af",
+      "component_key": "8ec0fb2df499",
+      "page_key": "0fee0dca15e0ac1d",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".testimonial-single-wrap > .extra-pad.p-gray-large",
+        "html": "<p class=\"p-gray-large extra-pad\">Brittah Springer<br>Content Marketing Director, Knack</p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "a8f85238-5849-41e4-aa04-ca1e2e22c5cc",
+      "error_key": "5621c7524d272c73",
+      "component_key": "98b0986e074b",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".c-callout-pill > div",
+        "html": "<div>20,000+ outdoor creators on Popfly</div>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "982182da-09b9-4412-86f2-cc1e29f755e3",
+      "error_key": "59072524736a0fcd",
+      "component_key": "8ec0fb2df499",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".c-section-wrapper:nth-child(5) > .w-layout-blockcontainer.container.w-container > .c-wrapper-title[data-swiper=\"dynamic-slider\"]:nth-child(1) > .extra-pad.p-gray-large",
+        "html": "<p class=\"p-gray-large extra-pad\">Everything you need to build, scale, and measure a world-class creator program.</p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "c2428c41-d503-45aa-97eb-734a88e92a80",
+      "error_key": "1c8dd5444a162d26",
+      "component_key": "8ec0fb2df499",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".c-wrapper-title[data-swiper=\"dynamic-slider\"]:nth-child(3) > .extra-pad.p-gray-large",
+        "html": "<p class=\"p-gray-large extra-pad\">The industry's most aligned creators already use Popfly, and are ready to <strong>grow with your brand.</strong></p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "ea0795a1-8a88-44d2-ba3a-f6e978f8bca4",
+      "error_key": "974444bdd5eb8aad",
+      "component_key": "36bb3a80639d",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".testimonial",
+        "html": "<p class=\"p-gray-large testimonial\">Popfly connects us with creators who actually live and breathe adventure. We're not sorting through irrelevant profiles, we're finding the right people, fast.\"<br></p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "4057a70d-53f4-49e9-a4d0-ce5be6eac675",
+      "error_key": "62b6395bcf7bba6b",
+      "component_key": "8ec0fb2df499",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".testimonial-single-wrap > .extra-pad.p-gray-large",
+        "html": "<p class=\"p-gray-large extra-pad\">Angie Burnett<br>Affiliate &amp; Influencer Marketing @ Backcountry</p>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "7d64d953-0017-4dd8-bab3-9874627b7f91",
+      "error_key": "6e51651d3ce86719",
+      "component_key": "98b0986e074b",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": "#static-grid > .c-creator-card.w-inline-block[target=\"_blank\"]:nth-child(1) > .c-card-bleed > div",
+        "html": "<div>Myranda Hausheer</div>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "c1d1db95-0ac3-431e-a28a-fc2c3cd645ba",
+      "error_key": "c1bdac0e7dd9554f",
+      "component_key": "98b0986e074b",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".c-creator-card.w-inline-block[target=\"_blank\"]:nth-child(2) > .c-card-bleed > div",
+        "html": "<div>Aaron Lutze</div>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "4cb4f5be-c96e-47bb-8481-0eb672f80732",
+      "error_key": "ad2d328343d89686",
+      "component_key": "98b0986e074b",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".c-creator-card.w-inline-block[target=\"_blank\"]:nth-child(3) > .c-card-bleed > div",
+        "html": "<div>Quinton Ellis</div>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "6d029e3d-a995-41a9-8d1d-e76fb70645ba",
+      "error_key": "6428ba31174eb537",
+      "component_key": "98b0986e074b",
+      "page_key": "4ce2f57113ece309",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".c-creator-card.w-inline-block[target=\"_blank\"]:nth-child(4) > .c-card-bleed > div",
+        "html": "<div>Brynn Weigelt</div>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Open the element in the Webflow Designer.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "moderate",
+        "fix_verified": false
+      }
+    },
+    {
+      "finding_id": "b54f7984-062f-47b8-b38a-e2fa3f5667a9",
+      "error_key": "2054fe98dfb054e1",
+      "component_key": "98b0986e074b",
+      "page_key": "b0f6785691dec60c",
+      "criterion": "1.4.3",
+      "level": "AA",
+      "severity": "major",
+      "category": "contrast",
+      "failure_type": "color-contrast",
+      "detected_by": "axe_core",
+      "triage_bucket": "fix_now",
+      "confidence": {
+        "score": 0.97,
+        "tier": "definitive",
+        "basis": "axe-core rules are binary checks with very low false positive rates. Rule tested criterion 1.4.3 and found a definitive violation.",
+        "requires_human": false,
+        "false_positive_risk": "low"
+      },
+      "evidence": {
+        "selector": ".cookie-consent > div",
+        "html": "<div>",
+        "measured_values": {
+          "failure_type": "color-contrast"
+        },
+        "aria_attributes": {},
+        "keyboard_sequence": null,
+        "bbox": null
+      },
+      "analysis": {
+        "method": "rule_based",
+        "reasoning": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements",
+        "impact": "Low contrast text is difficult or impossible to read for users with low vision",
+        "affected_users": [
+          "low_vision"
+        ],
+        "llm": null
+      },
+      "remediation": {
+        "generic_fix": "Adjust text or background color to achieve a contrast ratio of at least 4.5:1 for normal text or 3:1 for large text.",
+        "platform_fix": {
+          "platform": "webflow",
+          "platform_version": "2024.1",
+          "steps": [
+            "Open the element in the Webflow Designer.",
+            "Identify the text color and background color in the Style panel (S).",
+            "Adjust one or both colors until the contrast ratio meets 4.5:1 for normal text or 3:1 for large text.",
+            "Use a contrast checker tool to verify the new values.",
+            "Check all element states (hover, focus, active) for contrast compliance."
+          ],
+          "designer_path": "Select text \u2192 Style panel (S) \u2192 Typography \u2192 Color",
+          "screenshots": [],
+          "generated_by": "template",
+          "platform_docs_url": null
+        },
+        "code_fix": null,
+        "estimated_effort": "minor",
+        "fix_verified": false
+      }
+    }
+  ]
+}
