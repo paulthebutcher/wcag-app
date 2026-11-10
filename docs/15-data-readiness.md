@@ -1,6 +1,6 @@
 # 15 Data readiness and fixture plan
 
-Read-only inventory performed 2026-11-09. No scans were run, fixture data regenerated, assets copied, or engine files modified during this documentation update.
+Planning inventory performed 2026-11-09. During subsequent implementation, the 20 referenced screenshots were copied into fixture-owned assets with source hashes and dimensions. No fresh scans were run and no engine files were modified.
 
 ## Existing data
 [observed] The pack already contains two real source scans, not just one:
@@ -10,7 +10,7 @@ Read-only inventory performed 2026-11-09. No scans were run, fixture data regene
 | scan-baseline.json | e779c8b0-03f2-44fd-87cc-b960bc230785 | 10 pages, 3 provisional templates, 10 groups, 70 errors, including 10 ungrouped |
 | scan-verify.json | 69271047-f1b0-4813-9cdb-32ff79817d0c | 10 pages; 15 detected, 18 not_detected, 37 not_checked |
 
-Both fixtures have unique error keys within each finding list. Their referenced screenshots currently exist in the engine data folder. They have not been bundled into the UI pack.
+Both fixtures have unique error keys within each finding list. Their referenced screenshots currently exist in the engine data folder. They are now bundled in `contract/fixtures/popfly-sample/assets/`.
 
 [observed] The source baseline has timings.json but no coverage.json. The verify source has both. The sample generator derives outcomes using global checks_run and provisional keys; this is not an authoritative per-page/per-check identity or coverage contract. The trimmed sample therefore supports UI and scenario testing but cannot prove the new live-engine identity/absence rules.
 

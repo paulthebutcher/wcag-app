@@ -1,8 +1,32 @@
-# WCAG UI: build pack
+# WCAG Workspace
 
-Planning pack for the WCAG Engine internal client-work app. Written and revised 2026-11-09. Documentation only; nothing here is built yet.
+Internal accessibility workbench with a local React interface, Fastify API and SQLite tracking. The first implementation uses the bundled Popfly sample scans. Live engine integration remains a separate milestone.
 
 The app is a local internal web app for Paul to do client accessibility work: run scans, work through errors, declare fixes and verify them, and leave feedback for engine improvement. It should also be polished enough to show in interviews; there is no separate demo product or public deployment. It talks to the WCAG Engine, which lives in its own repo (`~/Developer/WCAG Scanner`) and will run as its own service.
+
+## Run locally
+
+Requires Node.js 22 or newer (developed and tested on Node 24).
+
+```sh
+npm ci
+npm run dev
+```
+
+Open [the local workspace](http://127.0.0.1:5173). Both web and API bind to loopback. Popfly seeds automatically once; changes persist in `.data/fixture/app.db`. Restarting does not reset your decisions. No API key is needed and fixture jobs do not scan the internet or call models.
+
+```sh
+npm test             # contract, fixture engine, persistence and API tests
+npm run build        # TypeScript checks and production web build
+npx playwright install chromium
+npm run test:e2e     # isolated browser workflow and accessibility tests
+```
+
+Use `PORT` to change the API port, `WEB_PORT` for Vite, `API_URL` for Vite's API proxy, and `WEB_ORIGIN` to trust a changed web origin. `APP_DATA_DIR` overrides the fixture database directory. Configuration is read from process environment; `.env.example` documents it and is not automatically loaded.
+
+Sample-mode scans replay saved Popfly evidence and are labeled as such. Other sites can be recorded, but their scans are unavailable until HttpEngine is built. PDF download is unavailable until a genuine report asset is supplied. Feedback export records judgments for future engine work; it does not train a model automatically.
+
+Version control: [paulthebutcher/wcag-app](https://github.com/paulthebutcher/wcag-app). Changes are committed incrementally; GitHub Actions runs checks and browser tests.
 
 ## Read in this order
 
@@ -24,6 +48,7 @@ The app is a local internal web app for Paul to do client accessibility work: ru
 | `docs/13-engine-work.md` | What the engine repo must add (separate thread) |
 | `docs/14-build-decisions.md` | Resolved behavior, job recovery, feedback, and implementation defaults |
 | `docs/15-data-readiness.md` | Available scans, missing fixture assets, and the scenario matrix |
+| `docs/16-build-status.md` | Implemented behavior, verification and remaining roadmap work |
 | `contract/` | Legacy sample types and real Popfly fixtures; see the migration note |
 
 ## Status of decisions

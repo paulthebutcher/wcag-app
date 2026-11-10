@@ -1,6 +1,6 @@
 # 12 Build plan
 
-This is future implementation work. The current request changes documentation only. Each UI phase ends with relevant logic checks, axe on new screens and keyboard checks. Engine dogfood runs in Phase 8 once the app is runnable; it is not a prerequisite for scaffolding.
+Implementation was authorized after the planning pass. These phases remain the acceptance roadmap; a running fixture build is not a claim that every phase is complete. Each UI phase ends with relevant logic checks, axe on new screens and keyboard checks. Engine dogfood runs in Phase 8 once the app is runnable; it is not a prerequisite for scaffolding.
 
 ## Phase 0: Scaffold, contract and fixtures
 - npm workspaces: apps/web, apps/server, packages/contract; selected stack in CLAUDE.md.
