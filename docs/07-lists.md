@@ -23,7 +23,7 @@ Severity and confidence are never used to rank or filter.
 ## Components & Global
 | Column | Notes |
 |---|---|
-| Name | Engine label, e.g. "Navigation: text contrast #2d2f31" |
+| Name | Engine label with an observed class list below it. Use a recorded selector when no class is available. Indicate additional recorded variants. |
 | Scope | Component or Global |
 | Status | Roll-up with counts |
 | Criteria | |

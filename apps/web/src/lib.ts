@@ -126,6 +126,41 @@ export function memberErrors(w: Workspace, kind: string, e: Entity) {
   }
   return [];
 }
+export function componentElementLabel(errors: Entity[]) {
+  const classLists = new Set<string>();
+  const selectors = new Set<string>();
+  for (const error of errors) {
+    const evidence = error.finding?.evidence;
+    const tag = (evidence?.html as string | undefined)?.match(
+      /^\s*<[a-z][\w:-]*(?:[^>"']|"[^"]*"|'[^']*')*>/i,
+    )?.[0];
+    const attributes = tag?.matchAll(
+      /\s+([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g,
+    );
+    const classAttr =
+      attributes && [...attributes].find((attr) => attr[1].toLowerCase() === 'class');
+    const classes = (classAttr?.[2] ?? classAttr?.[3] ?? classAttr?.[4] ?? '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (classes.length)
+      classLists.add(
+        [...new Set(classes)]
+          .sort()
+          .map((name) => '.' + name)
+          .join(' '),
+      );
+    const selector = evidence?.measured_values?.axe_element_selector ?? evidence?.selector;
+    if (typeof selector === 'string' && selector.trim()) selectors.add(selector.trim());
+  }
+  const values = classLists.size ? classLists : selectors;
+  const first = [...values].sort()[0];
+  if (!first) return null;
+  const others = values.size - 1;
+  return others
+    ? `${first} · +${others} ${classLists.size ? 'class' : 'selector'} ${others === 1 ? 'variant' : 'variants'}`
+    : first;
+}
 export function errorName(e: Entity) {
   return (
     e.name ??

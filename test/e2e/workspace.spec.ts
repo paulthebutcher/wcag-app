@@ -19,6 +19,12 @@ test('workspace screens are navigable, accessible, and reflow', async ({ page, r
   for (const route of routes) {
     await page.goto(route);
     await expect(page.locator('main h1')).toBeVisible();
+    if (route === base + '/components') {
+      await expect(page.getByText('SITE WORKSPACE', { exact: true })).toHaveCount(0);
+      await expect(page.locator('tbody .element-label').first()).not.toHaveText(
+        'Element not recorded',
+      );
+    }
     const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
       .analyze();

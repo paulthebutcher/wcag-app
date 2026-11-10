@@ -51,6 +51,7 @@ import {
   criteria,
   formattedDate,
   memberErrors,
+  componentElementLabel,
   entityName,
   filteredEntities,
   normalizeWorkspace,
@@ -314,7 +315,7 @@ function App() {
             download={`${workspace?.site.name ?? 'site'}-feedback.json`}
           >
             <Download size={16} />
-            <span>Export feedback</span>
+            <span>Download feedback JSON</span>
           </a>
         )}
         <p>Evidence. Action. Verification.</p>
@@ -343,7 +344,7 @@ function App() {
         <div className="mobile-nav">{side}</div>
       </Dialog>
       <div className="app-main">
-        <header className="topbar">
+        <header className={cn('topbar', mode === 'fixture' && 'has-sample')}>
           <Button
             variant="ghost"
             size="icon"
@@ -353,17 +354,6 @@ function App() {
           >
             <Menu size={20} />
           </Button>
-          <div className="breadcrumb">
-            <span>Workspace</span>
-            <ChevronRight size={14} />
-            <span>{workspace?.site.name ?? (siteId === 'new' ? 'Add site' : 'Loading')}</span>
-            {kind !== 'overview' && (
-              <>
-                <ChevronRight size={14} />
-                <span>{kindNames[kind]}</span>
-              </>
-            )}
-          </div>
           {mode === 'fixture' && (
             <span className="sample-pill">
               <span />
@@ -410,50 +400,53 @@ function App() {
               />
             ) : (
               <>
-                <div className="page-heading">
-                  <div>
-                    <div className="eyebrow">SITE WORKSPACE</div>
-                    <h1>{kindNames[kind]}</h1>
-                    <p>
-                      {
+                {kind === 'components' ? (
+                  <h1 className="sr-only">{kindNames[kind]}</h1>
+                ) : (
+                  <div className="page-heading">
+                    <div>
+                      <div className="eyebrow">SITE WORKSPACE</div>
+                      <h1>{kindNames[kind]}</h1>
+                      <p>
                         {
-                          components: 'Work on the changes that reach the most pages.',
-                          templates: 'Understand recurring layouts across your site.',
-                          pages: 'Work through accessibility, one page at a time.',
-                          errors: 'Every finding, with the evidence to act on it.',
-                          scans: 'A lasting record of what ran and what changed.',
-                        }[kind]
-                      }
-                    </p>
-                  </div>
-                  {kind === 'scans' && scanAvailable && (
-                    <div className="actions">
-                      <Button
-                        variant="outline"
-                        disabled={busy || !!active}
-                        onClick={() =>
-                          void action('/scans', { kind: 'full' }, 'Full scan queued').catch(
-                            () => {},
-                          )
+                          {
+                            templates: 'Understand recurring layouts across your site.',
+                            pages: 'Work through accessibility, one page at a time.',
+                            errors: 'Every finding, with the evidence to act on it.',
+                            scans: 'A lasting record of what ran and what changed.',
+                          }[kind]
                         }
-                      >
-                        <RefreshCw size={16} />
-                        {hasFullScan ? 'Rescan previous pages' : 'Run first scan'}
-                      </Button>
-                      <Button
-                        disabled={busy || !!active || !waiting}
-                        onClick={() =>
-                          void action('/scans', { kind: 'verify' }, 'Verification queued').catch(
-                            () => {},
-                          )
-                        }
-                      >
-                        <ScanLine size={16} />
-                        Scan declared fixes
-                      </Button>
+                      </p>
                     </div>
-                  )}
-                </div>
+                    {kind === 'scans' && scanAvailable && (
+                      <div className="actions">
+                        <Button
+                          variant="outline"
+                          disabled={busy || !!active}
+                          onClick={() =>
+                            void action('/scans', { kind: 'full' }, 'Full scan queued').catch(
+                              () => {},
+                            )
+                          }
+                        >
+                          <RefreshCw size={16} />
+                          {hasFullScan ? 'Rescan previous pages' : 'Run first scan'}
+                        </Button>
+                        <Button
+                          disabled={busy || !!active || !waiting}
+                          onClick={() =>
+                            void action('/scans', { kind: 'verify' }, 'Verification queued').catch(
+                              () => {},
+                            )
+                          }
+                        >
+                          <ScanLine size={16} />
+                          Scan declared fixes
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {kind === 'scans' && (
                   <p className="muted small">
                     {scanAvailable
@@ -559,13 +552,15 @@ function Overview({
                     ? `${waiting} ${waiting === 1 ? 'fix is' : 'fixes are'} ready to verify`
                     : 'A clear path from findings to fixes'}
               </h2>
-              <p>
-                {active
-                  ? `${label(active.state)} · ${active.progress?.phase ?? 'Preparing the scan'}`
-                  : waiting
+              {active ? (
+                <ScanProgress scan={active} />
+              ) : (
+                <p>
+                  {waiting
                     ? 'Recheck the original detections and see what changed.'
                     : 'Start with a shared component, review the evidence, then declare your fix.'}
-              </p>
+                </p>
+              )}
             </div>
             <Button
               disabled={busy || !!active || !waiting}
@@ -1085,6 +1080,11 @@ function EntityList({
                       )}
                       {entityName(e, kind)}
                     </Link>
+                    {kind === 'components' && (
+                      <small className="element-label">
+                        {componentElementLabel(memberErrors(w, kind, e)) ?? 'Element not recorded'}
+                      </small>
+                    )}
                     {kind === 'pages' && <small>{e.url}</small>}
                     {kind === 'scans' && <small>{label(e.scope ?? 'url')}</small>}
                   </td>
@@ -1509,7 +1509,7 @@ function Detail({
           <Button asChild variant="outline">
             <a href={`/api/sites/${w.site.id}/scans/${id}/report.pdf`} download>
               <Download size={16} />
-              Export engine PDF
+              Download scan PDF
             </a>
           </Button>
         )}
@@ -2132,6 +2132,43 @@ function Detail({
     </>
   );
 }
+function ScanProgress({ scan }: { scan: Entity }) {
+  const { phase, message, pages_done: done, pages_total: total } = scan.progress ?? {};
+  const activity =
+    scan.ingest_state === 'importing'
+      ? 'Importing results'
+      : message ||
+        (phase
+          ? label(phase)
+          : scan.state === 'queued'
+            ? 'Waiting to start'
+            : 'Preparing the scan');
+  const position = scan.state === 'queued' && scan.queue_position > 0 ? scan.queue_position : null;
+  const hasPageCounts =
+    scan.state === 'running' &&
+    scan.ingest_state !== 'importing' &&
+    Number.isInteger(done) &&
+    Number.isInteger(total) &&
+    total > 0 &&
+    done >= 0 &&
+    done <= total;
+  return (
+    <div className="scan-progress" role="status">
+      <p>
+        {activity}
+        {position !== null && ` · Queue position ${position}`}
+      </p>
+      {hasPageCounts && (
+        <div>
+          <progress aria-label="Pages processed" value={done} max={total} />
+          <span>
+            {done} of {total} pages
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 function ScanOverview({
   scan,
   base,
@@ -2149,14 +2186,18 @@ function ScanOverview({
     <>
       <Panel title="Scan summary">
         <div className="panel-body">
-          <div className="result-grid wide">
-            {['new', 'fixed', 'reopened', 'not_checked'].map((k) => (
-              <Link key={k} to={`${base}/scans/${scan.id}?tab=changes&outcome=${k}`}>
-                <strong>{scan.summary?.[k] ?? 0}</strong>
-                <span>{label(k)}</span>
-              </Link>
-            ))}
-          </div>
+          {['running', 'queued'].includes(scan.state) ? (
+            <ScanProgress scan={scan} />
+          ) : (
+            <div className="result-grid wide">
+              {['new', 'fixed', 'reopened', 'not_checked'].map((k) => (
+                <Link key={k} to={`${base}/scans/${scan.id}?tab=changes&outcome=${k}`}>
+                  <strong>{scan.summary?.[k] ?? 0}</strong>
+                  <span>{label(k)}</span>
+                </Link>
+              ))}
+            </div>
+          )}
           {(scan.failure_message || scan.state === 'failed') && (
             <div role="alert" className="alert error">
               <div>

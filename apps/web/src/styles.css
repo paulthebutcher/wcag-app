@@ -398,26 +398,14 @@ code {
   min-height: 65px;
   border-bottom: 1px solid #e2e8f0;
   background: #fff;
-  display: flex;
+  display: none;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   padding: 0 36px;
 }
-.breadcrumb {
+.topbar.has-sample {
   display: flex;
-  gap: 12px;
-  align-items: center;
-  color: #64748b;
-  font-size: 11px;
-  min-width: 0;
-}
-.breadcrumb span:last-child {
-  color: #334155;
-  font-weight: 500;
-}
-.breadcrumb svg {
-  color: #94a3b8;
 }
 .sample-pill {
   font-size: 10px;
@@ -769,6 +757,9 @@ td small {
   display: inline;
   line-height: 1.6;
 }
+.element-label {
+  font-family: ui-monospace, monospace;
+}
 .page-cell {
   min-width: 160px;
   max-width: 220px;
@@ -905,6 +896,19 @@ td small {
   align-items: center;
   gap: 6px;
   font-size: 11px;
+}
+.scan-progress > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  color: #475569;
+  font-size: 12px;
+}
+.scan-progress progress {
+  width: min(100%, 160px);
+  accent-color: #1d4ed8;
 }
 .filter-bar {
   display: flex;
@@ -1539,6 +1543,7 @@ td small {
     display: inline-flex;
   }
   .topbar {
+    display: flex;
     justify-content: flex-start;
   }
   .sample-pill {
@@ -1585,15 +1590,6 @@ td small {
   .topbar {
     padding: 0 12px;
     gap: 6px;
-  }
-  .breadcrumb {
-    gap: 5px;
-    font-size: 10px;
-    flex-wrap: wrap;
-  }
-  .breadcrumb > span:first-child,
-  .breadcrumb > svg:first-of-type {
-    display: none;
   }
   .sample-pill {
     font-size: 9px;

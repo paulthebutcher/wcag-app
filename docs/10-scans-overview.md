@@ -14,7 +14,7 @@ Known limit to state in the UI near the verify button: verify only re-runs the c
 ## Running state
 - Starting a scan transactionally freezes a request and target/status revisions in a queued scans row, then submits it with that row ID as the engine idempotency key.
 - The server polls the engine job (every 5 s while any job is active) and updates `state` and `progress`.
-- The Scans nav label shows a running indicator while any scan is queued or running.
+- The Scans nav label shows a running indicator while any scan is queued or running. Overview and scan detail show the latest activity and page counts when supplied by the engine.
 - One active scan request per site. The engine queues jobs across sites and runs one globally. Show queue position and waiting-for-engine-lock state.
 - Import completion, outages, restart and retry behavior follow `14`. A failed job never updates error statuses. A successful job with skipped checks can complete with not_checked outcomes.
 - Status actions remain usable while a scan runs; newer manual status actions win over the pending result. Notes and reviews remain usable.
@@ -25,7 +25,7 @@ Known limit to state in the UI near the verify button: verify only re-runs the c
 - "Mark all read" on the Scans list.
 
 ## Export
-Export engine PDF uses `/scans/:id/report.pdf`. Label it as scan evidence excluding app statuses, notes and reviews. Report redesign is later. Export feedback is a separate JSON action in the site overflow menu.
+Download scan PDF uses `/scans/:id/report.pdf`. Label it as scan evidence excluding app statuses, notes and reviews. Report redesign is later. Export feedback is a separate JSON action in the site overflow menu.
 
 ## Overview page
 In order:

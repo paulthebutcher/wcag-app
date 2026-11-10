@@ -265,6 +265,7 @@ export function createApp(options: AppOptions) {
           throw new AppError('The engine returned a job for a different request.', 502);
         scan.engine_job_id = job.job_id;
         scan.progress = job.progress;
+        scan.queue_position = job.queue_position;
         scan.state = job.state;
         scan.started_at = job.started_at ?? scan.started_at;
         if (job.state === 'completed') {
