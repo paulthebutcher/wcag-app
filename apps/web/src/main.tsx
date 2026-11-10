@@ -57,6 +57,7 @@ import {
   normalizeWorkspace,
   resolveSource,
 } from './lib';
+import { EvidenceCapture } from './components/evidence-capture';
 import './styles.css';
 const kinds = ['components', 'templates', 'pages', 'errors', 'scans'];
 const kindNames: Record<string, string> = {
@@ -400,59 +401,31 @@ function App() {
               />
             ) : (
               <>
-                {kind === 'components' ? (
-                  <h1 className="sr-only">{kindNames[kind]}</h1>
-                ) : (
-                  <div className="page-heading">
-                    <div>
-                      <div className="eyebrow">SITE WORKSPACE</div>
-                      <h1>{kindNames[kind]}</h1>
-                      <p>
-                        {
-                          {
-                            templates: 'Understand recurring layouts across your site.',
-                            pages: 'Work through accessibility, one page at a time.',
-                            errors: 'Every finding, with the evidence to act on it.',
-                            scans: 'A lasting record of what ran and what changed.',
-                          }[kind]
-                        }
-                      </p>
-                    </div>
-                    {kind === 'scans' && scanAvailable && (
-                      <div className="actions">
-                        <Button
-                          variant="outline"
-                          disabled={busy || !!active}
-                          onClick={() =>
-                            void action('/scans', { kind: 'full' }, 'Full scan queued').catch(
-                              () => {},
-                            )
-                          }
-                        >
-                          <RefreshCw size={16} />
-                          {hasFullScan ? 'Rescan previous pages' : 'Run first scan'}
-                        </Button>
-                        <Button
-                          disabled={busy || !!active || !waiting}
-                          onClick={() =>
-                            void action('/scans', { kind: 'verify' }, 'Verification queued').catch(
-                              () => {},
-                            )
-                          }
-                        >
-                          <ScanLine size={16} />
-                          Scan declared fixes
-                        </Button>
-                      </div>
-                    )}
+                <h1 className="sr-only">{kindNames[kind]}</h1>
+                {kind === 'scans' && scanAvailable && (
+                  <div className="actions scan-list-actions">
+                    <Button
+                      variant="outline"
+                      disabled={busy || !!active}
+                      onClick={() =>
+                        void action('/scans', { kind: 'full' }, 'Full scan queued').catch(() => {})
+                      }
+                    >
+                      <RefreshCw size={16} />
+                      {hasFullScan ? 'Rescan previous pages' : 'Run first scan'}
+                    </Button>
+                    <Button
+                      disabled={busy || !!active || !waiting}
+                      onClick={() =>
+                        void action('/scans', { kind: 'verify' }, 'Verification queued').catch(
+                          () => {},
+                        )
+                      }
+                    >
+                      <ScanLine size={16} />
+                      Scan declared fixes
+                    </Button>
                   </div>
-                )}
-                {kind === 'scans' && (
-                  <p className="muted small">
-                    {scanAvailable
-                      ? 'Verification re-runs only the checks behind declared fixes. Other problems need a full rescan.'
-                      : 'Scanning is currently unavailable.'}
-                  </p>
                 )}
                 <EntityList
                   w={workspace}
@@ -460,6 +433,13 @@ function App() {
                   rows={(workspace as any)[kind]}
                   action={action}
                 />
+                {kind === 'scans' && (
+                  <p className="helper">
+                    {scanAvailable
+                      ? 'Verification re-runs only the checks behind declared fixes. Other problems need a full rescan.'
+                      : 'Scanning is currently unavailable.'}
+                  </p>
+                )}
               </>
             )
           ) : (
@@ -1329,10 +1309,18 @@ function Detail({
           ? (selectedObservation.finding ?? selectedObservation.raw_finding)
           : null
         : finding;
-  const screenshot = selectedObservation
-    ? (selectedObservation.screenshot_url ?? selectedObservation.snapshot?.screenshot_url)
-    : (e.screenshot_url ??
-      (kind === 'pages' ? e.snapshot?.screenshot_url : members[0]?.screenshot_url));
+  const capture = selectedObservation
+    ? selectedObservation.snapshot
+    : kind === 'pages'
+      ? e.snapshot
+      : members[0]?.snapshot;
+  const screenshot = capture?.screenshot_url;
+  const boxes =
+    kind === 'pages'
+      ? members
+          .filter((error) => error.snapshot?.id === capture?.id)
+          .map((error) => error.finding?.evidence?.bbox)
+      : [evidenceFinding?.evidence?.bbox];
   const submitForm = async (ev: React.FormEvent) => {
     ev.preventDefault();
     setFormError('');
@@ -1598,29 +1586,15 @@ function Detail({
                         </dl>
                       )}
                       {screenshot ? (
-                        <>
-                          <div
-                            className="screenshot"
-                            tabIndex={0}
-                            role="region"
-                            aria-label="Captured page screenshot"
-                          >
-                            <img
-                              src={screenshot}
-                              alt={`Captured page evidence for ${page?.title ?? e.title ?? w.site.name}`}
-                              loading="lazy"
-                            />
-                          </div>
-                          <a
-                            className="text-link small"
-                            href={screenshot}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Open full capture
-                            <ExternalLink size={13} />
-                          </a>
-                        </>
+                        <EvidenceCapture
+                          src={screenshot}
+                          title={page?.title ?? e.title ?? w.site.name ?? 'this page'}
+                          dimensions={capture.screenshot_dimensions}
+                          deviceScale={capture.viewport?.device_scale_factor}
+                          afterScroll={capture.screenshot_capture === 'after_scroll'}
+                          boxes={boxes}
+                          focusElement={kind !== 'pages'}
+                        />
                       ) : (
                         <div className="evidence-empty">
                           <Files size={22} />

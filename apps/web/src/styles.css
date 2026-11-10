@@ -439,6 +439,10 @@ code {
   gap: 24px;
   margin-bottom: 30px;
 }
+.scan-list-actions {
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
 .eyebrow {
   font-size: 9px;
   color: #64748b;
@@ -1149,6 +1153,26 @@ td small {
   width: 100%;
   height: auto;
   display: block;
+}
+.screenshot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.screenshot:has(.capture-context) {
+  height: auto;
+}
+.capture-context {
+  max-height: 340px;
+}
+.capture-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: #475569;
+  font-size: 11px;
 }
 .code-label {
   font-size: 9px;

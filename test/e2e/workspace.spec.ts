@@ -19,8 +19,14 @@ test('workspace screens are navigable, accessible, and reflow', async ({ page, r
   for (const route of routes) {
     await page.goto(route);
     await expect(page.locator('main h1')).toBeVisible();
-    if (route === base + '/components') {
+    if (
+      ['components', 'templates', 'pages', 'errors', 'scans'].some(
+        (kind) => route === base + '/' + kind,
+      )
+    ) {
       await expect(page.getByText('SITE WORKSPACE', { exact: true })).toHaveCount(0);
+    }
+    if (route === base + '/components') {
       await expect(page.locator('tbody .element-label').first()).not.toHaveText(
         'Element not recorded',
       );
@@ -138,4 +144,42 @@ test('skip link and dialogs support keyboard focus', async ({ page, request }) =
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(add).toBeFocused();
+});
+
+test('finding evidence crops its matching screenshot and highlights the element', async ({
+  page,
+  request,
+}) => {
+  const [site] = await (await request.get('/api/sites')).json();
+  const endpoint = '/api/sites/' + site.id + '/workspace';
+  const workspace = await (await request.get(endpoint)).json();
+  const error = workspace.errors.find((entry: any) => entry.snapshot?.screenshot_dimensions);
+  expect(error).toBeDefined();
+  error.snapshot.screenshot_capture = 'after_scroll';
+  error.finding.evidence.bbox = { x: 100, y: 200, width: 50, height: 30 };
+  await page.route('**' + endpoint, (route) => route.fulfill({ json: workspace }));
+  await page.goto('/sites/' + site.id + '/errors/' + error.id);
+  const screenshot = page.getByRole('img', { name: /Highlighted element in the capture/ });
+  await expect(screenshot).toBeVisible();
+  await expect(screenshot).toHaveAttribute('viewBox', '4 136 242 158');
+  await expect(screenshot.locator('rect').first()).toHaveAttribute('x', '100');
+  await expect(page.getByText('Element in context · Captured after scrolling')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open full capture' })).toHaveAttribute(
+    'href',
+    error.snapshot.screenshot_url,
+  );
+
+  const historical = error.observations.find(
+    (observation: any) => observation.snapshot?.screenshot_url,
+  );
+  expect(historical).toBeDefined();
+  await page.goto('/sites/' + site.id + '/errors/' + error.id + '?observation=' + historical.id);
+  await expect(page.getByRole('img', { name: /Captured page evidence for/ })).toBeVisible();
+  await expect(page.getByRole('img', { name: /Highlighted element in the capture/ })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole('link', { name: 'Open full capture' })).toHaveAttribute(
+    'href',
+    historical.snapshot.screenshot_url,
+  );
 });

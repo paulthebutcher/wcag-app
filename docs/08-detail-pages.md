@@ -56,6 +56,8 @@ Scans                 Overview · Changes · Coverage
 ## Evidence and unavailable data
 Error detail uses the snapshot belonging to the displayed detected observation. A later page image never replaces that evidence. History offers "View evidence" for a selected observation. not_checked without a capture shows its reason and a separately labeled link to prior evidence.
 
+New service scans can provide a separate display screenshot taken after a bounded scroll pass. For desktop axe findings with stable coordinates, show an element crop and outline drawn from that same image. Page overview marks only findings from the displayed snapshot. Older captures and findings without reliable coordinates fall back to the full page.
+
 Absent HTTP status, viewport, coverage, timings or model usage displays "Not recorded in this scan". Missing screenshot shows an inline unavailable state beside selector/HTML. Missing model trace says "No model trace recorded". Missing bbox is expected and is not an error. Do not fabricate zero usage or successful coverage.
 
 Scan pages remain available while queued/running/failed. Results and review become available only after ingest completes. Historical scan metadata and Changes stay frozen; links open the current persistent entity.
