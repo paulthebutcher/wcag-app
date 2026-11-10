@@ -108,6 +108,81 @@ describe('local API', () => {
       ).statusCode,
     ).toBe(400);
   });
+  it('resolves receipt references within a frozen brief and only applies eligible selected rows', async () => {
+    const { app, store } = fresh();
+    const token = (await app.inject({ url: '/api/session', headers })).json().token;
+    const mutation = { ...headers, 'x-session-token': token };
+    const post = (path: string, payload: object, site = 'popfly') =>
+      app.inject({ method: 'POST', url: '/api/sites/' + site + path, headers: mutation, payload });
+    const [first, second] = store.all('errors', 'popfly');
+    const group = first.component_id;
+    expect(group).toBeTruthy();
+    const expectedCount = new Set([
+      first.id,
+      second.id,
+      ...store
+        .all('errors', 'popfly')
+        .filter((error) => error.component_id === group)
+        .map((error) => error.id),
+    ]).size;
+    const made = await post('/fix-briefs', {
+      error_ids: [first.id, second.id, first.id],
+      component_ids: [group],
+    });
+    expect(made.statusCode).toBe(201);
+    const brief = made.json();
+    expect(brief.count).toBe(expectedCount);
+    const path = '/fix-briefs/' + brief.id + '/download';
+    const file = await app.inject({ url: '/api/sites/popfly' + path, headers });
+    expect(file.headers['content-type']).toContain('text/markdown');
+    expect(file.body).toContain('## F-002');
+    expect(file.body).toContain(brief.id);
+    store.createSite('Other', 'https://other.test', 'other');
+    expect((await app.inject({ url: '/api/sites/other' + path, headers })).statusCode).toBe(404);
+
+    const receipt = {
+      brief_id: brief.id,
+      addressed: [
+        { id: 'F-001', note: 'Updated the shared component' },
+        { id: 'F-002' },
+        { id: 'F-999' },
+      ],
+    };
+    expect((await post('/fix-receipts/preview', { receipt }, 'other')).statusCode).toBe(404);
+    const preview = await post('/fix-receipts/preview', { receipt });
+    const rows = preview.json().rows;
+    expect(rows.map((row: any) => [row.state, row.finding?.id])).toEqual([
+      ['ready', first.id],
+      ['ready', second.id],
+      ['unknown', undefined],
+    ]);
+    expect(store.get('errors', first.id)?.status).toBe('has_error');
+    expect(
+      (await post('/fix-receipts/confirm', { receipt, selected: ['F-001', 'F-999'] })).statusCode,
+    ).toBe(409);
+    expect(store.get('errors', first.id)?.status).toBe('has_error');
+
+    store.setStatus('popfly', second.id, 'in_progress');
+    store.setStatus('popfly', second.id, 'has_error');
+    expect((await post('/fix-receipts/preview', { receipt })).json().rows[1].state).toBe('changed');
+    const stale = await post('/fix-receipts/confirm', { receipt, selected: ['F-001', 'F-002'] });
+    expect(stale.statusCode).toBe(409);
+    expect(store.get('errors', first.id)?.status).toBe('has_error');
+
+    const confirmation = { receipt, selected: ['F-001'], request_id: 'fix-receipt-test' };
+    expect((await post('/fix-receipts/confirm', confirmation)).json()).toEqual({ count: 1 });
+    expect((await post('/fix-receipts/confirm', confirmation)).json()).toEqual({ count: 1 });
+    expect(store.get('errors', first.id)?.status).toBe('in_progress');
+    expect(store.get('errors', second.id)?.status).toBe('has_error');
+    expect(
+      store.all('events', 'popfly').filter((event) => event.kind === 'fix_receipt_confirmed'),
+    ).toMatchObject([{ entity_id: first.id, note: 'Updated the shared component' }]);
+    expect(store.all('scans', 'popfly')).toHaveLength(1);
+    const verify = await post('/scans', { kind: 'verify' });
+    expect(verify.json().request_payload.targets.map((target: any) => target.error_key)).toEqual([
+      first.error_key,
+    ]);
+  });
   it('runs request-aware verification and refuses simulated scans for other sites', async () => {
     const { app, store, pump } = fresh();
     const token = (await app.inject({ url: '/api/session', headers })).json().token;

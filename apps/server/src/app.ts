@@ -7,6 +7,14 @@ import { Store, AppError, type Row, type Status } from './store.js';
 import { EngineError, FixtureEngine } from './engine.js';
 import { HttpEngine } from './http-engine.js';
 import { hostedMode } from './hosted.js';
+import {
+  confirmFixReceipt,
+  createFixBrief,
+  previewFixReceipt,
+  receiptSchema,
+  renderFixBrief,
+  selectionSchema,
+} from './fix-brief.js';
 
 export type AppOptions = {
   root: string;
@@ -213,6 +221,38 @@ export function createApp(options: AppOptions) {
     if (scan.ingest_state !== 'failed' || !scan.engine_scan_id)
       throw new AppError('This scan has no failed import to retry');
     return store.ingest(id!, await engine.getResult(scan.engine_scan_id), scan.id);
+  });
+  app.post('/api/sites/:id/fix-briefs', async (req, reply) => {
+    const { id } = params(req);
+    const b = selectionSchema.parse(req.body);
+    return reply.code(201).send(action(id!, b, 'fix-brief', () => createFixBrief(store, id!, b)));
+  });
+  app.get('/api/sites/:id/fix-briefs/:briefId/download', async (req, reply) => {
+    const { id, briefId } = params(req);
+    const safeId = z.string().uuid().parse(briefId);
+    const markdown = renderFixBrief(store, id!, safeId);
+    return reply
+      .type('text/markdown; charset=utf-8')
+      .header('Content-Disposition', 'attachment; filename="fix-brief-' + safeId + '.md"')
+      .send(markdown);
+  });
+  app.post('/api/sites/:id/fix-receipts/preview', async (req) => {
+    const { id } = params(req);
+    const b = z.object({ receipt: receiptSchema }).parse(req.body);
+    return { rows: previewFixReceipt(store, id!, b.receipt) };
+  });
+  app.post('/api/sites/:id/fix-receipts/confirm', async (req) => {
+    const { id } = params(req);
+    const b = z
+      .object({
+        receipt: receiptSchema,
+        selected: z.array(z.string().min(1).max(40)).min(1).max(500),
+        request_id: z.string().optional(),
+      })
+      .parse(req.body);
+    return action(id!, b, 'fix-receipt', () =>
+      confirmFixReceipt(store, id!, b.receipt, b.selected),
+    );
   });
   app.get('/api/sites/:id/feedback', async (req, reply) => {
     reply.header('Content-Disposition', 'attachment; filename="wcag-feedback.json"');

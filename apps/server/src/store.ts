@@ -105,6 +105,7 @@ export class Store {
    CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS sites(id TEXT PRIMARY KEY,url TEXT NOT NULL UNIQUE,payload TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS scans(id TEXT PRIMARY KEY,site_id TEXT NOT NULL REFERENCES sites(id),engine_scan_id TEXT UNIQUE,payload TEXT NOT NULL);
+   CREATE TABLE IF NOT EXISTS fix_briefs(id TEXT PRIMARY KEY,site_id TEXT NOT NULL REFERENCES sites(id),payload TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS action_requests(id TEXT PRIMARY KEY,request_hash TEXT NOT NULL,result TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS group_removals(error_id TEXT,component_id TEXT,site_id TEXT NOT NULL REFERENCES sites(id),payload TEXT NOT NULL,PRIMARY KEY(error_id,component_id));
    CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY AUTOINCREMENT,site_id TEXT NOT NULL REFERENCES sites(id),payload TEXT NOT NULL);`);
@@ -128,6 +129,7 @@ export class Store {
       'observations',
       'page_snapshots',
       'scan_changes',
+      'fix_briefs',
     ]) {
       this.db.exec(
         `CREATE TRIGGER IF NOT EXISTS ${table}_immutable_update BEFORE UPDATE ON ${table} BEGIN SELECT RAISE(ABORT,'Immutable record'); END; CREATE TRIGGER IF NOT EXISTS ${table}_immutable_delete BEFORE DELETE ON ${table} BEGIN SELECT RAISE(ABORT,'Immutable record'); END;`,
