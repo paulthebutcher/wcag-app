@@ -212,19 +212,17 @@ export class Store {
     return site;
   }
   event(siteId: string, type: string, id: string, kind: string, extra: Row = {}) {
-    this.db
-      .prepare('INSERT INTO events(site_id,payload) VALUES(?,?)')
-      .run(
-        siteId,
-        JSON.stringify({
-          site_id: siteId,
-          entity_type: type,
-          entity_id: id,
-          kind,
-          created_at: now(),
-          ...extra,
-        }),
-      );
+    this.db.prepare('INSERT INTO events(site_id,payload) VALUES(?,?)').run(
+      siteId,
+      JSON.stringify({
+        site_id: siteId,
+        entity_type: type,
+        entity_id: id,
+        kind,
+        created_at: now(),
+        ...extra,
+      }),
+    );
   }
   action(siteId: string, requestId: string | undefined, body: Row, fn: () => any) {
     const id = requestId ?? randomUUID();
@@ -360,21 +358,19 @@ export class Store {
     if (!e.component_id) return { ok: true };
     const group = e.component_id;
     this.bumpParents(e);
-    this.db
-      .prepare('INSERT OR IGNORE INTO group_removals VALUES(?,?,?,?)')
-      .run(
-        id,
-        group,
-        siteId,
-        JSON.stringify({
-          id: randomUUID(),
-          error_id: id,
-          component_id: group,
-          site_id: siteId,
-          source_observation_id: e.last_detected_observation_id,
-          created_at: now(),
-        }),
-      );
+    this.db.prepare('INSERT OR IGNORE INTO group_removals VALUES(?,?,?,?)').run(
+      id,
+      group,
+      siteId,
+      JSON.stringify({
+        id: randomUUID(),
+        error_id: id,
+        component_id: group,
+        site_id: siteId,
+        source_observation_id: e.last_detected_observation_id,
+        created_at: now(),
+      }),
+    );
     e.component_id = null;
     e.content_revision++;
     this.put('errors', e);

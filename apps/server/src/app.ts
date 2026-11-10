@@ -60,11 +60,9 @@ export function createApp(options: AppOptions) {
   });
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof z.ZodError)
-      return reply
-        .code(400)
-        .send({
-          error: { message: err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') },
-        });
+      return reply.code(400).send({
+        error: { message: err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') },
+      });
     const status = (err as any).statusCode ?? 400;
     reply.code(status).send({ error: { message: (err as Error).message } });
   });

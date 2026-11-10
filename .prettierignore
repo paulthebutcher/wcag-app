@@ -1,0 +1,6 @@
+node_modules
+dist
+.data
+contract/fixtures
+package-lock.json
+test-results
