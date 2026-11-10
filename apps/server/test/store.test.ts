@@ -1,19 +1,166 @@
-import { afterEach,describe,expect,it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { resolve } from 'node:path';
 import { Store, nextStatus, rollup, states } from '../src/store.js';
 import { loadFixtures } from '../src/engine.js';
-const root=resolve(import.meta.dirname,'../../..');
-const fixtures=loadFixtures(root);const stores:Store[]=[];
-function fresh(){const s=new Store(':memory:');stores.push(s);s.seed(fixtures.baseline);return s;}
-afterEach(()=>{for(const s of stores.splice(0))s.close();});
-describe('tracking and evidence',()=>{
- it('seeds real fixture counts and imports idempotently',()=>{const s=fresh();let w=s.workspace('popfly');expect([w.errors.length,w.pages.length,w.templates.length,w.components.length]).toEqual([70,10,3,10]);expect(w.errors.filter((e:any)=>!e.component_id)).toHaveLength(10);const events=w.events.length;s.ingest('popfly',fixtures.baseline);expect(s.workspace('popfly').events).toHaveLength(events);});
- it('covers scan transitions including persistent dismissal and not checked',()=>{for(const status of states){expect(nextStatus(status,'not_checked')).toBe(status);expect(nextStatus(status,'detected')).toBe(status==='not_an_issue'?status:'has_error');expect(nextStatus(status,'not_detected')).toBe(status==='not_an_issue'?status:'fixed');}expect(rollup([])).toBe('no_issues');});
- it('records dismissal and human feedback atomically and preserves it across scans',()=>{const s=fresh();const target=s.workspace('popfly').errors.find((e:any)=>fixtures.verify.findings.some(f=>f.error_key===e.error_key));s.action('popfly','dismiss',{id:target.id},()=>s.setStatus('popfly',target.id,'not_an_issue'));s.action('popfly','dismiss',{id:target.id},()=>s.setStatus('popfly',target.id,'not_an_issue'));expect(s.all('notes')).toHaveLength(1);expect(s.all('reviews')).toHaveLength(1);s.ingest('popfly',fixtures.verify);const after=s.workspace('popfly').errors.find((e:any)=>e.id===target.id);expect(after.status).toBe('not_an_issue');expect(after.reviewed).toBe(true);expect(s.all('errors')).toHaveLength(70);expect(s.feedback('popfly').records.some((r:any)=>r.record_type==='decision'&&r.source_engine_finding_id)).toBe(true);});
- it('verify produces 15 still detected,18 fixed,37 in progress and keeps historical evidence',()=>{const s=fresh();const original=s.workspace('popfly');for(const e of original.errors)s.setStatus('popfly',e.id,'in_progress');const scan=s.prepareScan('popfly','verify');s.ingest('popfly',fixtures.verify,scan.id);const w=s.workspace('popfly');expect(states.map(st=>w.errors.filter((e:any)=>e.status===st).length)).toEqual([15,37,18,0]);const fixed=w.errors.find((e:any)=>e.status==='fixed');const old=original.errors.find((e:any)=>e.id===fixed.id);expect(fixed.snapshot.engine_snapshot_id).toBe(old.snapshot.engine_snapshot_id);expect(w.scans.find((x:any)=>x.id===scan.id).summary).toMatchObject({fixed:18,still_detected:15,not_checked:37});});
- it('keeps later manual actions and rejected group associations',()=>{const s=fresh();const w=s.workspace('popfly');for(const e of w.errors)s.setStatus('popfly',e.id,'in_progress');const scan=s.prepareScan('popfly','verify');const absent=fixtures.verify.outcomes.find(o=>o.outcome==='not_detected')!;const e=w.errors.find((e:any)=>e.error_key===absent.error_key);s.setStatus('popfly',e.id,'has_error');const detected=w.errors.find((e:any)=>e.component_id&&fixtures.verify.findings.some(f=>f.error_key===e.error_key));s.removeGroup('popfly',detected.id);s.ingest('popfly',fixtures.verify,scan.id);expect(s.get('errors',e.id)?.status).toBe('has_error');expect(s.get('errors',detected.id)?.component_id).toBeNull();expect(s.all('scan_changes').find(c=>c.error_id===e.id&&c.scan_id===scan.id)?.status_application).toBe('skipped_newer_action');});
- it('rejects malformed import without applying partial changes',()=>{const s=fresh();const broken=structuredClone(fixtures.verify);broken.outcomes[0]!.error_key='unknown';expect(()=>s.ingest('popfly',broken)).toThrow();expect(s.all('scans')).toHaveLength(1);expect(s.all('observations')).toHaveLength(70);});
- it('never treats an absent full-scan finding alone as fixed',()=>{const s=fresh();const omitted=structuredClone(fixtures.baseline);omitted.scan.scan_id='omitted-test';omitted.coverage.scan_id='omitted-test';omitted.findings=[];omitted.outcomes=[];s.ingest('popfly',omitted);expect(s.all('errors').every(e=>e.status==='has_error')).toBe(true);});
- it('prevents immutable evidence and notes from being edited',()=>{const s=fresh();const e=s.all('errors')[0]!;s.addNote('popfly','error',e.id,'other','Context');expect(()=>s.db.prepare('UPDATE notes SET payload=?').run('{}')).toThrow('Immutable record');expect(()=>s.db.prepare('DELETE FROM observations').run()).toThrow('Immutable record');});
- it('ordinary review does not create a training verdict; notes alone do not review',()=>{const s=fresh();const [a,b]=s.all('errors');s.addNote('popfly','error',a!.id,'false_positive');s.review('popfly','error',b!.id);const w=s.workspace('popfly');expect(w.errors.find((e:any)=>e.id===a!.id).reviewed).toBe(false);expect(s.all('decisions')).toHaveLength(0);expect(s.feedback('popfly').records).toHaveLength(1);});
+const root = resolve(import.meta.dirname, '../../..');
+const fixtures = loadFixtures(root);
+const stores: Store[] = [];
+function fresh() {
+  const s = new Store(':memory:');
+  stores.push(s);
+  s.seed(fixtures.baseline);
+  return s;
+}
+afterEach(() => {
+  for (const s of stores.splice(0)) s.close();
+});
+describe('tracking and evidence', () => {
+  it('seeds real fixture counts and imports idempotently', () => {
+    const s = fresh();
+    let w = s.workspace('popfly');
+    expect([w.errors.length, w.pages.length, w.templates.length, w.components.length]).toEqual([
+      70, 10, 3, 10,
+    ]);
+    expect(w.errors.filter((e: any) => !e.component_id)).toHaveLength(10);
+    const events = w.events.length;
+    s.ingest('popfly', fixtures.baseline);
+    expect(s.workspace('popfly').events).toHaveLength(events);
+  });
+  it('covers scan transitions including persistent dismissal and not checked', () => {
+    for (const status of states) {
+      expect(nextStatus(status, 'not_checked')).toBe(status);
+      expect(nextStatus(status, 'detected')).toBe(status === 'not_an_issue' ? status : 'has_error');
+      expect(nextStatus(status, 'not_detected')).toBe(status === 'not_an_issue' ? status : 'fixed');
+    }
+    expect(rollup([])).toBe('no_issues');
+  });
+  it('records dismissal and human feedback atomically and preserves it across scans', () => {
+    const s = fresh();
+    const target = s
+      .workspace('popfly')
+      .errors.find((e: any) => fixtures.verify.findings.some((f) => f.error_key === e.error_key));
+    s.action('popfly', 'dismiss', { id: target.id }, () =>
+      s.setStatus('popfly', target.id, 'not_an_issue'),
+    );
+    s.action('popfly', 'dismiss', { id: target.id }, () =>
+      s.setStatus('popfly', target.id, 'not_an_issue'),
+    );
+    expect(s.all('notes')).toHaveLength(1);
+    expect(s.all('reviews')).toHaveLength(1);
+    s.ingest('popfly', fixtures.verify);
+    const after = s.workspace('popfly').errors.find((e: any) => e.id === target.id);
+    expect(after.status).toBe('not_an_issue');
+    expect(after.reviewed).toBe(true);
+    expect(s.all('errors')).toHaveLength(70);
+    expect(
+      s
+        .feedback('popfly')
+        .records.some((r: any) => r.record_type === 'decision' && r.source_engine_finding_id),
+    ).toBe(true);
+  });
+  it('verify produces 15 still detected,18 fixed,37 in progress and keeps historical evidence', () => {
+    const s = fresh();
+    const original = s.workspace('popfly');
+    for (const e of original.errors) s.setStatus('popfly', e.id, 'in_progress');
+    const scan = s.prepareScan('popfly', 'verify');
+    s.ingest('popfly', fixtures.verify, scan.id);
+    const w = s.workspace('popfly');
+    expect(states.map((st) => w.errors.filter((e: any) => e.status === st).length)).toEqual([
+      15, 37, 18, 0,
+    ]);
+    const fixed = w.errors.find((e: any) => e.status === 'fixed');
+    const old = original.errors.find((e: any) => e.id === fixed.id);
+    expect(fixed.snapshot.engine_snapshot_id).toBe(old.snapshot.engine_snapshot_id);
+    expect(w.scans.find((x: any) => x.id === scan.id).summary).toMatchObject({
+      fixed: 18,
+      still_detected: 15,
+      not_checked: 37,
+    });
+  });
+  it('keeps later manual actions and rejected group associations', () => {
+    const s = fresh();
+    const w = s.workspace('popfly');
+    for (const e of w.errors) s.setStatus('popfly', e.id, 'in_progress');
+    const scan = s.prepareScan('popfly', 'verify');
+    const absent = fixtures.verify.outcomes.find((o) => o.outcome === 'not_detected')!;
+    const e = w.errors.find((e: any) => e.error_key === absent.error_key);
+    s.setStatus('popfly', e.id, 'has_error');
+    const detected = w.errors.find(
+      (e: any) =>
+        e.component_id && fixtures.verify.findings.some((f) => f.error_key === e.error_key),
+    );
+    s.removeGroup('popfly', detected.id);
+    s.ingest('popfly', fixtures.verify, scan.id);
+    expect(s.get('errors', e.id)?.status).toBe('has_error');
+    expect(s.get('errors', detected.id)?.component_id).toBeNull();
+    expect(
+      s.all('scan_changes').find((c) => c.error_id === e.id && c.scan_id === scan.id)
+        ?.status_application,
+    ).toBe('skipped_newer_action');
+  });
+  it('rejects malformed import without applying partial changes', () => {
+    const s = fresh();
+    const broken = structuredClone(fixtures.verify);
+    broken.outcomes[0]!.error_key = 'unknown';
+    expect(() => s.ingest('popfly', broken)).toThrow();
+    expect(s.all('scans')).toHaveLength(1);
+    expect(s.all('observations')).toHaveLength(70);
+  });
+  it('never treats an absent full-scan finding alone as fixed', () => {
+    const s = fresh();
+    const omitted = structuredClone(fixtures.baseline);
+    omitted.scan.scan_id = 'omitted-test';
+    omitted.coverage.scan_id = 'omitted-test';
+    omitted.findings = [];
+    omitted.outcomes = [];
+    s.ingest('popfly', omitted);
+    expect(s.all('errors').every((e) => e.status === 'has_error')).toBe(true);
+  });
+  it('prevents immutable evidence and notes from being edited', () => {
+    const s = fresh();
+    const e = s.all('errors')[0]!;
+    s.addNote('popfly', 'error', e.id, 'other', 'Context');
+    expect(() => s.db.prepare('UPDATE notes SET payload=?').run('{}')).toThrow('Immutable record');
+    expect(() => s.db.prepare('DELETE FROM observations').run()).toThrow('Immutable record');
+  });
+  it('ordinary review does not create a training verdict; notes alone do not review', () => {
+    const s = fresh();
+    const [a, b] = s.all('errors');
+    s.addNote('popfly', 'error', a!.id, 'false_positive');
+    s.review('popfly', 'error', b!.id);
+    const w = s.workspace('popfly');
+    expect(w.errors.find((e: any) => e.id === a!.id).reviewed).toBe(false);
+    expect(s.all('decisions')).toHaveLength(0);
+    expect(s.feedback('popfly').records).toHaveLength(1);
+  });
+  it('rejects missing comparison outcomes on attempted full-scan pages', () => {
+    const s = fresh();
+    const scan = s.prepareScan('popfly', 'full');
+    const missing = structuredClone(fixtures.baseline);
+    missing.scan.scan_id = 'missing-outcomes';
+    missing.coverage.scan_id = 'missing-outcomes';
+    expect(() => s.ingest('popfly', missing, scan.id)).toThrow('missing requested outcome');
+    expect(s.all('observations')).toHaveLength(70);
+  });
+  it('does not stale reviews for an identical recapture', () => {
+    const s = fresh();
+    const w = s.workspace('popfly');
+    const e = w.errors[0];
+    s.review('popfly', 'error', e.id);
+    s.review('popfly', 'page', e.page_id);
+    const repeated = structuredClone(fixtures.baseline);
+    repeated.scan.scan_id = 'same-content';
+    repeated.coverage.scan_id = 'same-content';
+    s.ingest('popfly', repeated);
+    const next = s.workspace('popfly');
+    expect(next.errors.find((x: any) => x.id === e.id).changed_since_review).toBe(false);
+    expect(next.pages.find((x: any) => x.id === e.page_id).changed_since_review).toBe(false);
+  });
+  it('keeps completed scan summaries fixed after manual status changes', () => {
+    const s = fresh();
+    const original = s.workspace('popfly').scans[0];
+    const e = s.all('errors')[0]!;
+    s.setStatus('popfly', e.id, 'not_an_issue');
+    expect(s.get('scans', original.id)?.summary).toEqual(original.summary);
+  });
 });

@@ -1,1 +1,12 @@
-{"name":"@wcag/server","private":true,"type":"module","scripts":{"dev":"tsx watch src/index.ts","start":"tsx src/index.ts"},"dependencies":{"@wcag/contract":"*"}}
+{
+  "name": "@wcag/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@wcag/contract": "*"
+  }
+}
