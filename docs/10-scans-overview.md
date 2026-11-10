@@ -27,6 +27,12 @@ Known limit to state in the UI near the verify button: verify only re-runs the c
 ## Export
 Download scan PDF uses `/scans/:id/report.pdf`. Label it as scan evidence excluding app statuses, notes and reviews. Report redesign is later. Export feedback is a separate JSON action in the site overflow menu.
 
+## Fix briefs and receipts
+
+Create a fix brief from the Errors or Components & Global table. A group adds its exact findings in Has error. The brief saves up to 500 unique findings with their source observations and status revisions. Each finding gets a reference scoped to the brief. The Markdown download includes captured evidence and the JSON receipt format.
+
+Paste the receipt back into either table. Preview resolves references only against the matching brief and site, shows exact finding links, and flags unknown references or findings that changed or closed since export. Select the eligible findings to mark In progress. Confirm rechecks all selected rows together and keeps the optional receipt notes in history. Scan declared fixes remains a separate action that verifies all In progress findings for the current site.
+
 ## Overview page
 In order:
 1. Site header: URL, last scan date and time, engine version, pages covered.

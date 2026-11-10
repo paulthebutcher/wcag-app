@@ -58,6 +58,7 @@ import {
   resolveSource,
 } from './lib';
 import { EvidenceCapture } from './components/evidence-capture';
+import { FixBriefDownload, FixReceiptDialog, type SavedBrief } from './components/fix-brief';
 import './styles.css';
 const kinds = ['components', 'templates', 'pages', 'errors', 'scans'];
 const kindNames: Record<string, string> = {
@@ -428,8 +429,13 @@ function App() {
                   </div>
                 )}
                 <EntityList
+                  key={workspace.site.id + ':' + kind}
                   w={workspace}
                   kind={kind}
+                  onReceiptApplied={(count) => {
+                    setMessage(count + ' marked In progress');
+                    void refresh();
+                  }}
                   rows={(workspace as any)[kind]}
                   action={action}
                 />
@@ -784,15 +790,43 @@ function EntityList({
   rows,
   action,
   embedded = false,
+  onReceiptApplied,
 }: {
   w: Workspace;
   kind: string;
   rows: Entity[];
   action: Action;
   embedded?: boolean;
+  onReceiptApplied?: (count: number) => void;
 }) {
   const [params, setParams] = useSearchParams(),
     location = useLocation();
+  const canExport = kind === 'errors' || kind === 'components';
+  const [selected, setSelected] = useState<string[] | null>(null);
+  const [brief, setBrief] = useState<SavedBrief | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+  const exportable = (e: Entity) => e.status === 'has_error' && !!e.last_detected_observation_id;
+  const eligible = new Set(
+    w.errors.filter(exportable).map((e) => (kind === 'components' ? e.component_id : e.id)),
+  );
+  async function createBrief() {
+    if (!selected?.length) return;
+    setExportError('');
+    setExporting(true);
+    try {
+      setBrief(
+        await api<SavedBrief>(
+          '/sites/' + w.site.id + '/fix-briefs',
+          kind === 'components' ? { component_ids: selected } : { error_ids: selected },
+        ),
+      );
+    } catch (error) {
+      setExportError((error as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  }
   const filtered = filteredEntities(w, kind, rows, params);
   const page = Math.min(
     Math.max(1, Number(params.get('page')) || 1),
@@ -1007,6 +1041,46 @@ function EntityList({
             Mark all read
           </Button>
         )}
+        {canExport && (
+          <div className="fix-brief-toolbar">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exporting}
+              onClick={() => {
+                setSelected(selected === null ? [] : null);
+                setExportError('');
+              }}
+            >
+              {selected === null ? 'Create fix brief' : 'Cancel selection'}
+            </Button>
+            {selected !== null && (
+              <>
+                <Button
+                  size="sm"
+                  disabled={!selected.length || exporting}
+                  onClick={() => void createBrief()}
+                >
+                  Create brief from {selected.length} selected
+                </Button>
+                <span className="muted small">
+                  {kind === 'components'
+                    ? 'Each group adds its findings that still need a fix.'
+                    : 'Select findings that still need a fix.'}
+                </span>
+              </>
+            )}
+            {onReceiptApplied && (
+              <FixReceiptDialog siteId={w.site.id} onApplied={onReceiptApplied} />
+            )}
+            <FixBriefDownload siteId={w.site.id} brief={brief} close={() => setBrief(null)} />
+            {exportError && (
+              <p role="alert" className="text-error">
+                {exportError}
+              </p>
+            )}
+          </div>
+        )}
       </div>
       {visible.length ? (
         <div
@@ -1021,6 +1095,11 @@ function EntityList({
             </caption>
             <thead>
               <tr>
+                {selected !== null && (
+                  <th className="brief-select-cell">
+                    <span className="sr-only">Select for brief</span>
+                  </th>
+                )}
                 <th>{kind === 'scans' ? 'SCAN' : 'NAME'}</th>
                 {kind === 'components' && <th>SCOPE</th>}
                 {kind === 'errors' && <th>PAGE</th>}
@@ -1053,6 +1132,23 @@ function EntityList({
             <tbody>
               {visible.map((e) => (
                 <tr key={e.id}>
+                  {selected !== null && (
+                    <td className="brief-select-cell">
+                      <input
+                        type="checkbox"
+                        aria-label={'Select ' + entityName(e, kind) + ' for fix brief'}
+                        checked={selected.includes(e.id)}
+                        disabled={exporting || (!eligible.has(e.id) && !selected.includes(e.id))}
+                        onChange={(event) =>
+                          setSelected((old) =>
+                            event.target.checked
+                              ? [...(old ?? []), e.id]
+                              : (old ?? []).filter((id) => id !== e.id),
+                          )
+                        }
+                      />
+                    </td>
+                  )}
                   <td className="name-cell">
                     <Link id={`row-${e.id}`} to={link(e)} onClick={() => remember(e)}>
                       {kind === 'scans' && e.state === 'completed' && !e.read_at && (
@@ -1064,6 +1160,9 @@ function EntityList({
                       <small className="element-label">
                         {componentElementLabel(memberErrors(w, kind, e)) ?? 'Element not recorded'}
                       </small>
+                    )}
+                    {kind === 'errors' && selected !== null && e.finding?.evidence?.selector && (
+                      <small className="element-label">{e.finding.evidence.selector}</small>
                     )}
                     {kind === 'pages' && <small>{e.url}</small>}
                     {kind === 'scans' && <small>{label(e.scope ?? 'url')}</small>}
@@ -1855,6 +1954,12 @@ function Detail({
                         {item.from_status &&
                           `${label(item.from_status)} → ${label(item.to_status)}`}
                         {item.reason ?? ''}
+                        {item.kind === 'fix_receipt_confirmed' && (
+                          <>
+                            {item.reference}
+                            {item.note && ' · ' + item.note}
+                          </>
+                        )}
                       </p>
                       <DateStamp value={item.sort} />
                       {item.engine_version && (

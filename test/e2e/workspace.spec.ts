@@ -183,3 +183,80 @@ test('finding evidence crops its matching screenshot and highlights the element'
     historical.snapshot.screenshot_url,
   );
 });
+
+test('a fix brief receipt previews exact rows and verifies only the confirmed selection', async ({
+  page,
+  request,
+}) => {
+  const { readFileSync } = await import('node:fs');
+  const fixture = JSON.parse(
+    readFileSync('contract/fixtures/popfly-sample/scan-verify.json', 'utf8'),
+  );
+  const absentKeys = new Set(
+    fixture.verify
+      .filter((row: any) => row.outcome === 'not_detected')
+      .map((row: any) => row.error_key),
+  );
+  const [site] = await (await request.get('/api/sites')).json();
+  const base = '/sites/' + site.id;
+  const workspace = () =>
+    request.get('/api' + base + '/workspace').then((response) => response.json());
+  const current = await workspace();
+  const first = current.errors.find(
+    (error: any) => error.status === 'has_error' && absentKeys.has(error.error_key),
+  );
+  expect(first).toBeDefined();
+  const other = current.errors.find(
+    (error: any) =>
+      error.status === 'has_error' && error.page_id === first.page_id && error.id !== first.id,
+  );
+  expect(other).toBeDefined();
+
+  await page.goto(
+    base + '/errors?status=has_error&criterion=' + first.criterion + ',' + other.criterion,
+  );
+  await page.getByRole('button', { name: 'Create fix brief', exact: true }).click();
+  for (const error of [first, other]) {
+    const row = page.getByRole('row').filter({ has: page.locator('#row-' + error.id) });
+    await row.getByRole('checkbox').check();
+  }
+  await page.getByRole('button', { name: 'Create brief from 2 selected' }).click();
+  const download = page.getByRole('link', { name: 'Download fix brief' });
+  const downloaded = page.waitForEvent('download');
+  await download.click();
+  const brief = readFileSync((await (await downloaded).path())!, 'utf8');
+  const briefId = brief.match(/"brief_id": "([^"]+)"/)?.[1];
+  expect(briefId).toBeTruthy();
+  expect(brief).toContain('## F-002');
+  await page.getByRole('button', { name: 'Close dialog' }).click();
+
+  await page.getByRole('button', { name: 'Paste fix receipt' }).click();
+  const receipt = {
+    brief_id: briefId,
+    addressed: [{ id: 'F-001', note: 'Updated the markup' }, { id: 'F-002' }, { id: 'F-999' }],
+  };
+  await page.getByLabel('Receipt JSON').fill(JSON.stringify(receipt));
+  await page.getByRole('button', { name: 'Preview findings' }).click();
+  await expect(page.getByText('Unknown ID in this brief')).toBeVisible();
+  const dialog = page.getByRole('dialog', { name: 'Fix receipt' });
+  await expect(dialog.locator('a[href="' + base + '/errors/' + first.id + '"]')).toBeVisible();
+  await expect(dialog.locator('a[href="' + base + '/errors/' + other.id + '"]')).toBeVisible();
+  expect((await workspace()).errors.find((error: any) => error.id === first.id).status).toBe(
+    'has_error',
+  );
+  await dialog.getByRole('checkbox', { name: /Select F-002/ }).uncheck();
+  const result = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(result.violations.map((violation) => violation.id)).toEqual([]);
+  await page.getByRole('button', { name: 'Mark 1 In progress' }).click();
+  await expect(page.getByText('1 finding marked In progress')).toBeVisible();
+  const after = await workspace();
+  expect(after.errors.find((error: any) => error.id === first.id).status).toBe('in_progress');
+  expect(after.errors.find((error: any) => error.id === other.id).status).toBe('has_error');
+  await page.getByRole('link', { name: 'Open Scans' }).click();
+  await page.getByRole('button', { name: 'Scan declared fixes' }).click();
+  await expect
+    .poll(async () => (await workspace()).errors.find((error: any) => error.id === first.id).status)
+    .toBe('fixed');
+});
