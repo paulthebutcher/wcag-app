@@ -14,5 +14,7 @@ FROM node:24-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production HOSTED_MODE=1
 COPY --from=build --chown=node:node /app /app
+RUN install -d -o node -g node /app/.data/workspace
 USER node
+RUN test -w /app/.data/workspace
 CMD ["node", "--import", "tsx", "apps/server/src/index.ts"]
