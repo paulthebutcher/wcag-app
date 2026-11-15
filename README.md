@@ -64,6 +64,7 @@ Version control: [paulthebutcher/wcag-app](https://github.com/paulthebutcher/wca
 | `docs/14-build-decisions.md` | Resolved behavior, job recovery, feedback, and implementation defaults |
 | `docs/15-data-readiness.md` | Available scans, missing fixture assets, and the scenario matrix |
 | `docs/16-build-status.md` | Implemented behavior, verification and remaining roadmap work |
+| `docs/17-design-and-flow-review.md` | November 15 design pass and workflow verification |
 | `contract/` | Legacy sample types and real Popfly fixtures; see the migration note |
 
 ## Status of decisions
