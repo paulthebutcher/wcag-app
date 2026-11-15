@@ -176,7 +176,12 @@ export function createApp(options: AppOptions) {
   app.post('/api/sites/:id/scans', async (req) => {
     const { id } = params(req);
     const b = z
-      .object({ kind: z.enum(['full', 'verify']), request_id: z.string().optional() })
+      .object({
+        kind: z.enum(['full', 'verify']),
+        request_id: z.string().optional(),
+        pages: z.array(z.string().url()).min(1).max(50).optional(),
+        owner_authorized_robots: z.object({ reason: z.string().trim().min(1).max(500) }).optional(),
+      })
       .parse(req.body);
     const site = store.site(id!);
     if (!engine) throw new AppError('Scanning is currently unavailable.', 503);
@@ -189,8 +194,14 @@ export function createApp(options: AppOptions) {
     const health = liveEngine && !prior ? await liveEngine.health() : undefined;
     if (health && site.identity_version && site.identity_version !== health.identity_version)
       throw new AppError('The scan engine uses an incompatible identity version.', 409);
+    if (
+      b.owner_authorized_robots &&
+      health &&
+      !health.capabilities.includes('owner_authorized_robots')
+    )
+      throw new AppError('Update the engine before using an owner-authorized scan.', 409);
     const saved = action(id!, b, 'scan', () =>
-      store.prepareScan(id!, b.kind, b.request_id, health?.identity_version),
+      store.prepareScan(id!, b.kind, b.request_id, health?.identity_version, b),
     );
     if (fixtureEngine) await pump();
     else void pump().catch((error) => app.log.error(error));

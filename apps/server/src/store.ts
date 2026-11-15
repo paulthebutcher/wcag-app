@@ -396,8 +396,36 @@ export class Store {
     kind: 'full' | 'verify',
     requestId: string = randomUUID(),
     identityVersion?: string,
+    scope?: { pages?: string[]; owner_authorized_robots?: { reason: string } },
   ): Row {
     const site = this.site(siteId);
+    if (
+      scope?.owner_authorized_robots &&
+      (kind !== 'full' ||
+        !scope.pages?.length ||
+        !scope.owner_authorized_robots.reason.trim() ||
+        scope.owner_authorized_robots.reason.length > 500)
+    )
+      throw new AppError(
+        'Owner authorization requires a full scan with explicit pages and a reason.',
+      );
+    if (
+      scope?.pages &&
+      (kind !== 'full' ||
+        !scope.pages.length ||
+        scope.pages.length > 50 ||
+        new Set(scope.pages).size !== scope.pages.length ||
+        scope.pages.some((value) => {
+          const url = new URL(value);
+          return (
+            url.origin !== new URL(site.url).origin ||
+            !!url.username ||
+            !!url.password ||
+            !!url.hash
+          );
+        }))
+    )
+      throw new AppError('Provide 1 to 50 distinct page URLs on this site.');
     const active = this.all('scans', siteId).find(
       (s) => ['queued', 'running'].includes(s.state) || s.ingest_state === 'failed',
     );
@@ -426,6 +454,9 @@ export class Store {
       kind,
       options: {
         max_pages: 50,
+        ...(scope?.owner_authorized_robots
+          ? { owner_authorized_robots: scope.owner_authorized_robots }
+          : {}),
         model_mode: site.model_mode,
         platform: 'auto',
         ...(kind === 'full' ? { tiers: [1, 2, 4, 5] } : {}),
@@ -434,16 +465,25 @@ export class Store {
         ? { targets }
         : {
             comparison_refs: targets,
-            ...(previous
-              ? { pages: previous.metadata.requested_urls ?? previous.metadata.attempted_urls }
-              : {}),
+            ...(scope?.pages
+              ? { pages: scope.pages }
+              : previous
+                ? { pages: previous.metadata.requested_urls ?? previous.metadata.attempted_urls }
+                : {}),
           }),
     };
     const scan = {
       id: requestId,
       site_id: siteId,
       kind,
-      scope: kind === 'verify' ? 'declared_fixes' : previous ? 'previous_pages' : 'url',
+      scope:
+        kind === 'verify'
+          ? 'declared_fixes'
+          : scope?.pages
+            ? 'explicit_pages'
+            : previous
+              ? 'previous_pages'
+              : 'url',
       state: 'queued',
       ingest_state: 'pending',
       request_payload: request,
