@@ -59,6 +59,7 @@ import {
   resolveSource,
 } from './lib';
 import { EvidenceCapture } from './components/evidence-capture';
+import { ScanReportDownload } from './components/scan-report';
 import { FixBriefDownload, FixReceiptDialog, type SavedBrief } from './components/fix-brief';
 import './styles.css';
 const kinds = ['components', 'templates', 'pages', 'errors', 'scans'];
@@ -176,6 +177,8 @@ function App() {
     [busy, setBusy] = useState(false),
     [mobile, setMobile] = useState(false);
   const requestGeneration = useRef(0);
+  const currentSite = useRef(siteId);
+  currentSite.current = siteId;
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => setMessage(''), 6000);
@@ -185,30 +188,38 @@ function App() {
     document.title = `${siteId === 'new' ? 'Add site' : kind === 'overview' ? 'Overview' : kindNames[kind]} · WCAG Workspace`;
   }, [siteId, kind]);
   async function refresh() {
-    if (!siteId || siteId === 'new') return;
+    if (!siteId || siteId === 'new' || currentSite.current !== siteId) return;
     const generation = ++requestGeneration.current;
     try {
       const w = normalizeWorkspace(await api<Workspace>(`/sites/${siteId}/workspace`));
-      if (generation === requestGeneration.current) {
+      if (generation === requestGeneration.current && currentSite.current === siteId) {
         setWorkspace(w);
         setLoadError('');
       }
     } catch (e) {
-      if (generation === requestGeneration.current) setLoadError((e as Error).message);
+      if (generation === requestGeneration.current && currentSite.current === siteId)
+        setLoadError((e as Error).message);
+    }
+  }
+  async function loadIndex() {
+    try {
+      const [s, health] = await Promise.all([
+        api<Entity[]>('/sites'),
+        api<{ mode: 'disabled' | 'fixture' | 'http' }>('/health'),
+      ]);
+      setMode(health.mode);
+      setSites(s);
+      setLoadError('');
+      if (location.pathname === '/')
+        navigate(s[0] ? `/sites/${s[0].id}` : '/sites/new', { replace: true });
+      return true;
+    } catch (error) {
+      setLoadError((error as Error).message);
+      return false;
     }
   }
   useEffect(() => {
-    Promise.all([
-      api<Entity[]>('/sites'),
-      api<{ mode: 'disabled' | 'fixture' | 'http' }>('/health'),
-    ])
-      .then(([s, health]) => {
-        setMode(health.mode);
-        setSites(s);
-        if (location.pathname === '/')
-          navigate(s[0] ? `/sites/${s[0].id}` : '/sites/new', { replace: true });
-      })
-      .catch((e) => setLoadError(e.message));
+    void loadIndex();
   }, []);
   useEffect(() => {
     setWorkspace(null);
@@ -240,14 +251,15 @@ function App() {
   }, [location.pathname, location.search]);
   async function action(path: string, body: object = {}, success = 'Saved') {
     setBusy(true);
+    setMessage('');
     setActionError('');
     try {
       const value = await api(`/sites/${siteId}${path}`, body);
       await refresh();
-      setMessage(success);
+      if (currentSite.current === siteId) setMessage(success);
       return value;
     } catch (e) {
-      setActionError((e as Error).message);
+      if (currentSite.current === siteId) setActionError((e as Error).message);
       throw e;
     } finally {
       setBusy(false);
@@ -288,37 +300,40 @@ function App() {
         ))}
         <option value="new">Add site +</option>
       </select>
-      <nav aria-label="Main navigation">
-        {['overview', ...kinds].map((k) => {
-          const Icon = iconMap[k],
-            path = `/sites/${siteId}${k === 'overview' ? '' : '/' + k}`;
-          return (
-            <NavLink
-              key={k}
-              end={k === 'overview'}
-              className={cn('nav-link', kind === k && 'active')}
-              to={siteId === 'new' ? '/sites/new' : path}
-            >
-              <Icon size={18} />
-              <span>{k === 'overview' ? 'Overview' : kindNames[k]}</span>
-              {k === 'errors' && workspace && (
-                <span className="nav-count">
-                  {
-                    workspace.errors.filter((e) => ['has_error', 'in_progress'].includes(e.status!))
-                      .length
-                  }
-                </span>
-              )}
-              {k === 'scans' && active ? (
-                <LoaderCircle size={14} className="spin" aria-label="Scan running" />
-              ) : k === 'scans' &&
-                workspace?.scans.some((s) => s.state === 'completed' && !s.read_at) ? (
-                <span className="unread-dot" aria-label="Unread scan" />
-              ) : null}
-            </NavLink>
-          );
-        })}
-      </nav>
+      {siteId && siteId !== 'new' && (
+        <nav aria-label="Main navigation">
+          {['overview', ...kinds].map((k) => {
+            const Icon = iconMap[k],
+              path = `/sites/${siteId}${k === 'overview' ? '' : '/' + k}`;
+            return (
+              <NavLink
+                key={k}
+                end={k === 'overview'}
+                className={cn('nav-link', kind === k && 'active')}
+                to={siteId === 'new' ? '/sites/new' : path}
+              >
+                <Icon size={18} />
+                <span>{k === 'overview' ? 'Overview' : kindNames[k]}</span>
+                {k === 'errors' && workspace && (
+                  <span className="nav-count">
+                    {
+                      workspace.errors.filter((e) =>
+                        ['has_error', 'in_progress'].includes(e.status!),
+                      ).length
+                    }
+                  </span>
+                )}
+                {k === 'scans' && active ? (
+                  <LoaderCircle size={14} className="spin" aria-label="Scan running" />
+                ) : k === 'scans' &&
+                  workspace?.scans.some((s) => s.state === 'completed' && !s.read_at) ? (
+                  <span className="unread-dot" aria-label="Unread scan" />
+                ) : null}
+              </NavLink>
+            );
+          })}
+        </nav>
+      )}
       <div className="sidebar-bottom">
         {siteId && siteId !== 'new' && (
           <a
@@ -401,7 +416,15 @@ function App() {
           {loadError && (
             <div className="alert error" role="alert">
               {loadError}
-              <Button variant="outline" size="sm" onClick={() => void refresh()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  void loadIndex().then((loaded) => {
+                    if (loaded) void refresh();
+                  })
+                }
+              >
                 Reconnect
               </Button>
             </div>
@@ -416,7 +439,14 @@ function App() {
             />
           ) : workspace ? (
             id ? (
-              <Detail w={workspace} kind={kind} id={id} action={action} busy={busy} />
+              <Detail
+                key={`${workspace.site.id}:${kind}:${id}`}
+                w={workspace}
+                kind={kind}
+                id={id}
+                action={action}
+                busy={busy}
+              />
             ) : kind === 'overview' ? (
               <Overview
                 w={workspace}
@@ -453,6 +483,15 @@ function App() {
                     </Button>
                   </div>
                 )}
+                {kind === 'scans' && active && (
+                  <div className="alert">
+                    <LoaderCircle size={18} className="spin" />
+                    <ScanProgress scan={active} />
+                  </div>
+                )}
+                {kind === 'scans' && !waiting && !active && scanAvailable && (
+                  <p className="helper">Mark findings In progress to enable verification.</p>
+                )}
                 <EntityList
                   key={workspace.site.id + ':' + kind}
                   w={workspace}
@@ -475,9 +514,13 @@ function App() {
             )
           ) : (
             <div className="loading">
-              <LoaderCircle className="spin" />
-              <h1>Opening your workspace</h1>
-              <p>Loading saved scan evidence.</p>
+              {!loadError && <LoaderCircle className="spin" />}
+              <h1>{loadError ? 'Workspace unavailable' : 'Opening your workspace'}</h1>
+              <p>
+                {loadError
+                  ? 'Reconnect to load your saved sites and evidence.'
+                  : 'Loading saved scan evidence.'}
+              </p>
             </div>
           )}
         </main>
@@ -579,7 +622,9 @@ function Overview({
             </Button>
           </div>
           <p className="helper">
-            Verification checks declared fixes only. Use a full rescan to look for other changes.
+            {waiting
+              ? 'Verification checks declared fixes only. Use a full rescan to look for other changes.'
+              : 'Mark findings In progress to enable verification. A full rescan checks for other changes.'}
           </p>
         </>
       ) : (
@@ -772,8 +817,37 @@ function MultiFilter({
   setParams: (p: URLSearchParams) => void;
 }) {
   const current = (params.get(name) ?? '').split(',').filter(Boolean);
+  const disclosure = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const closeOutside = (event: PointerEvent) => {
+      if (disclosure.current && !disclosure.current.contains(event.target as Node))
+        disclosure.current.open = false;
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && disclosure.current?.open) {
+        disclosure.current.open = false;
+        disclosure.current.querySelector('summary')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, []);
   return (
-    <details className="filter-multi">
+    <details
+      ref={disclosure}
+      className="filter-multi"
+      onToggle={(event) => {
+        const panel = event.currentTarget.querySelector<HTMLElement>('.filter-options');
+        if (!event.currentTarget.open || !panel) return;
+        panel.style.left = '0px';
+        const rect = panel.getBoundingClientRect();
+        panel.style.left = `${Math.min(0, document.documentElement.clientWidth - rect.right - 16)}px`;
+      }}
+    >
       <summary>
         {title}
         {current.length > 0 && <span>{current.length}</span>}
@@ -854,6 +928,17 @@ function EntityList({
   );
   const visible = filtered.slice((page - 1) * 50, page * 50),
     base = `/sites/${w.site.id}`;
+  const visibleEligible = visible
+    .filter((entity) => eligible.has(entity.id))
+    .map((entity) => entity.id);
+  const allVisibleSelected =
+    visibleEligible.length > 0 && visibleEligible.every((id) => selected?.includes(id));
+  const someVisibleSelected = visibleEligible.some((id) => selected?.includes(id));
+  const selectPage = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (selectPage.current)
+      selectPage.current.indeterminate = someVisibleSelected && !allVisibleSelected;
+  }, [someVisibleSelected, allVisibleSelected, selected]);
   const criterionOptions = [...new Set(w.errors.map((e) => e.criterion ?? e.finding?.criterion))]
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
@@ -1083,10 +1168,11 @@ function EntityList({
                 >
                   Create brief from {selected.length} selected
                 </Button>
-                <span className="muted small">
+                <span className="muted small brief-selection-note">
+                  {selected.length} selected across all pages and filters.{' '}
                   {kind === 'components'
-                    ? 'Each group adds its findings that still need a fix.'
-                    : 'Select findings that still need a fix.'}
+                    ? 'Each group adds only its findings in Has error.'
+                    : 'Only findings in Has error can be added.'}
                 </span>
               </>
             )}
@@ -1117,7 +1203,20 @@ function EntityList({
               <tr>
                 {selected !== null && (
                   <th className="brief-select-cell">
-                    <span className="sr-only">Select for brief</span>
+                    <input
+                      ref={selectPage}
+                      type="checkbox"
+                      aria-label="Select eligible rows on this page"
+                      checked={allVisibleSelected}
+                      disabled={exporting || !visibleEligible.length}
+                      onChange={(event) =>
+                        setSelected((old) =>
+                          event.target.checked
+                            ? [...new Set([...(old ?? []), ...visibleEligible])]
+                            : (old ?? []).filter((id) => !visibleEligible.includes(id)),
+                        )
+                      }
+                    />
                   </th>
                 )}
                 <th>{kind === 'scans' ? 'SCAN' : 'NAME'}</th>
@@ -1151,7 +1250,7 @@ function EntityList({
             </thead>
             <tbody>
               {visible.map((e) => (
-                <tr key={e.id}>
+                <tr key={e.id} className={selected?.includes(e.id) ? 'selection-row' : undefined}>
                   {selected !== null && (
                     <td className="brief-select-cell">
                       <input
@@ -1613,12 +1712,7 @@ function Detail({
           </Button>
         )}
         {kind === 'scans' && e.state === 'completed' && e.provenance?.kind === 'engine' && (
-          <Button asChild variant="outline">
-            <a href={`/api/sites/${w.site.id}/scans/${id}/report.pdf`} download>
-              <Download size={16} />
-              Download scan PDF
-            </a>
-          </Button>
+          <ScanReportDownload siteId={w.site.id} scanId={id} />
         )}
       </div>
       <Tabs.Root
@@ -2347,7 +2441,10 @@ function ScanOverview({
                 : 'Not recorded'}
             </dd>
             <dt>Report</dt>
-            <dd>Engine reports exclude app statuses, notes and reviews.</dd>
+            <dd>
+              {scan.provenance?.kind !== 'engine' && 'No PDF was recorded for this sample scan. '}
+              Engine reports exclude app statuses, notes and reviews.
+            </dd>
           </dl>
         </div>
       </Panel>
@@ -2405,6 +2502,8 @@ function AddSite({ fixture, onAdded }: { fixture: boolean; onAdded: (s: Entity) 
           <label>
             Site name
             <input
+              maxLength={200}
+              autoComplete="organization"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -2415,6 +2514,8 @@ function AddSite({ fixture, onAdded }: { fixture: boolean; onAdded: (s: Entity) 
             Website URL
             <input
               type="url"
+              autoComplete="url"
+              spellCheck={false}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required

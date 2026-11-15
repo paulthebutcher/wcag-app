@@ -2193,3 +2193,20 @@ td small {
     transform: none;
   }
 }
+
+.status-has_error > span {
+  background: var(--coral);
+  box-shadow: 0 0 0 1px var(--destructive);
+}
+.report-download {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.report-download p {
+  max-width: 55ch;
+}
+.screenshot:has(svg:not(.capture-context)) svg {
+  min-width: 440px;
+}
