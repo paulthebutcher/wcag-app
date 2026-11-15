@@ -164,3 +164,33 @@ describe('tracking and evidence', () => {
     expect(s.get('scans', original.id)?.summary).toEqual(original.summary);
   });
 });
+
+it('scopes owner authorization to one explicit full scan without altering history or defaults', () => {
+  const s = fresh();
+  const before = JSON.stringify(s.all('scans'));
+  const pages = [s.site('popfly').url + '/lib/components'];
+  const auth = { reason: 'Owner requested staging audit' };
+  expect(() =>
+    s.prepareScan('popfly', 'full', 'missing-pages', undefined, { owner_authorized_robots: auth }),
+  ).toThrow(/explicit pages/);
+  expect(() =>
+    s.prepareScan('popfly', 'full', 'wrong-origin', undefined, {
+      pages: ['https://elsewhere.test/'],
+      owner_authorized_robots: auth,
+    }),
+  ).toThrow(/this site/);
+  expect(JSON.stringify(s.all('scans'))).toBe(before);
+  const scan = s.prepareScan('popfly', 'full', 'owner-audit', undefined, {
+    pages,
+    owner_authorized_robots: auth,
+  });
+  expect(scan.scope).toBe('explicit_pages');
+  expect(scan.request_payload.pages).toEqual(pages);
+  expect(scan.request_payload.options.owner_authorized_robots).toEqual(auth);
+  expect(JSON.stringify(s.all('scans').filter((row) => row.id !== scan.id))).toBe(before);
+  scan.state = 'failed';
+  s.put('scans', scan);
+  expect(
+    s.prepareScan('popfly', 'full', 'later-normal').request_payload.options.owner_authorized_robots,
+  ).toBeUndefined();
+});

@@ -18,6 +18,7 @@ export const TargetRefSchema = z.object({
 });
 export type TargetRef = z.infer<typeof TargetRefSchema>;
 const options = z.object({
+  owner_authorized_robots: z.object({ reason: z.string().trim().min(1).max(500) }).optional(),
   max_pages: z.number().int().min(1).max(50).default(50),
   tiers: z.array(z.number().int().min(1).max(5)).optional(),
   model_mode: z.enum(['local_only', 'assisted']).default('local_only'),
