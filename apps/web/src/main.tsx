@@ -41,6 +41,7 @@ import {
   CircleCheck,
   Info,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import { Button, Dialog, Tooltip, TooltipProvider, cn } from './components/ui/primitives';
 import {
@@ -175,6 +176,14 @@ function App() {
     [busy, setBusy] = useState(false),
     [mobile, setMobile] = useState(false);
   const requestGeneration = useRef(0);
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(''), 6000);
+    return () => clearTimeout(timer);
+  }, [message]);
+  useEffect(() => {
+    document.title = `${siteId === 'new' ? 'Add site' : kind === 'overview' ? 'Overview' : kindNames[kind]} · WCAG Workspace`;
+  }, [siteId, kind]);
   async function refresh() {
     if (!siteId || siteId === 'new') return;
     const generation = ++requestGeneration.current;
@@ -250,7 +259,7 @@ function App() {
     (scan) => scan.kind === 'full' && scan.state === 'completed',
   );
   const waiting = workspace?.errors.filter((e) => e.status === 'in_progress').length ?? 0;
-  const side = (
+  const side = (inMobileNav = false) => (
     <>
       <Link className="brand" to={siteId && siteId !== 'new' ? `/sites/${siteId}` : '/'}>
         <span className="brand-mark">
@@ -261,11 +270,11 @@ function App() {
         </span>
       </Link>
       <div className="site-label">WORKING SITE</div>
-      <label className="sr-only" htmlFor="site-picker">
+      <label className="sr-only" htmlFor={inMobileNav ? 'mobile-site-picker' : 'site-picker'}>
         Current site
       </label>
       <select
-        id="site-picker"
+        id={inMobileNav ? 'mobile-site-picker' : 'site-picker'}
         className="site-select"
         value={siteId === 'new' ? 'new' : (siteId ?? '')}
         onChange={(e) =>
@@ -286,6 +295,7 @@ function App() {
           return (
             <NavLink
               key={k}
+              end={k === 'overview'}
               className={cn('nav-link', kind === k && 'active')}
               to={siteId === 'new' ? '/sites/new' : path}
             >
@@ -336,14 +346,15 @@ function App() {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <aside className="sidebar">{side}</aside>
+      <aside className="sidebar">{side()}</aside>
       <Dialog
         open={mobile}
         onOpenChange={setMobile}
+        className="dialog-navigation"
         title="Workspace navigation"
         description="Choose a site or section."
       >
-        <div className="mobile-nav">{side}</div>
+        <div className="mobile-nav">{side(true)}</div>
       </Dialog>
       <div className="app-main">
         <header className={cn('topbar', mode === 'fixture' && 'has-sample')}>
@@ -356,6 +367,9 @@ function App() {
           >
             <Menu size={20} />
           </Button>
+          <span className="topbar-location">
+            {siteId === 'new' ? 'Add site' : kind === 'overview' ? 'Overview' : kindNames[kind]}
+          </span>
           {mode === 'fixture' && (
             <span className="sample-pill">
               <span />
@@ -364,9 +378,20 @@ function App() {
           )}
         </header>
         <main id="main" tabIndex={-1} className="main-content">
-          <div className="sr-only" role="status" aria-live="polite">
-            {message}
-          </div>
+          {message && (
+            <div className="toast" role="status">
+              <CircleCheck size={18} aria-hidden="true" />
+              <span>{message}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Dismiss notification"
+                onClick={() => setMessage('')}
+              >
+                <X size={16} />
+              </Button>
+            </div>
+          )}
           {actionError && (
             <div className="alert error" role="alert">
               <CircleAlert size={18} />
@@ -495,12 +520,7 @@ function Overview({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">YOUR ACCESSIBILITY WORKSPACE</div>
-          <h1>
-            {w.site.name}
-            <span className="heading-divider">/</span>
-            <span className="light-heading">Overview</span>
-          </h1>
+          <h1>{w.site.name}</h1>
           <p>
             <Globe size={14} />
             <a href={w.site.url} target="_blank" rel="noreferrer">
@@ -536,7 +556,7 @@ function Overview({
                   ? 'Your scan is in progress'
                   : waiting
                     ? `${waiting} ${waiting === 1 ? 'fix is' : 'fixes are'} ready to verify`
-                    : 'A clear path from findings to fixes'}
+                    : 'Start with a shared fix'}
               </h2>
               {active ? (
                 <ScanProgress scan={active} />
@@ -1161,7 +1181,7 @@ function EntityList({
                         {componentElementLabel(memberErrors(w, kind, e)) ?? 'Element not recorded'}
                       </small>
                     )}
-                    {kind === 'errors' && selected !== null && e.finding?.evidence?.selector && (
+                    {kind === 'errors' && e.finding?.evidence?.selector && (
                       <small className="element-label">{e.finding.evidence.selector}</small>
                     )}
                     {kind === 'pages' && <small>{e.url}</small>}
@@ -1224,7 +1244,7 @@ function EntityList({
                       {kind === 'errors' ? (
                         <>
                           <td>
-                            <Tooltip text="No labels yet">
+                            <Tooltip text="Original confidence assigned by the engine. Independent of your review status.">
                               <span tabIndex={0} className="neutral-pill">
                                 {label(e.finding?.confidence?.tier ?? 'unknown')}
                               </span>
@@ -1351,7 +1371,7 @@ function Detail({
   useEffect(() => {
     if (kind === 'scans' && e?.state === 'completed' && !e.read_at && markedRead.current !== id) {
       markedRead.current = id;
-      void action(`/scans/${id}/read`, {}, 'Scan opened').catch(() => {});
+      void action(`/scans/${id}/read`, {}, '').catch(() => {});
     }
   }, [id, e?.state]);
   if (!e)
@@ -2361,7 +2381,9 @@ function AddSite({ fixture, onAdded }: { fixture: boolean; onAdded: (s: Entity) 
     [busy, setBusy] = useState(false);
   return (
     <div className="add-site">
-      <div className="eyebrow">GROW YOUR WORKSPACE</div>
+      <div className="add-site-icon">
+        <Globe size={26} aria-hidden="true" />
+      </div>
       <h1>Add a site</h1>
       <p className="muted">Keep findings and progress organized by client website.</p>
       <Panel>
