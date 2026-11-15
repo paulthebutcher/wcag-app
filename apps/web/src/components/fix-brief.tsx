@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Download } from 'lucide-react';
+import { Download, LoaderCircle } from 'lucide-react';
 import { api, label } from '../lib';
 import { Button, Dialog } from './ui/primitives';
 
@@ -159,9 +159,20 @@ export function FixReceiptDialog({
       <Dialog
         open={open}
         onOpenChange={changeOpen}
+        className="dialog-receipt"
         title="Fix receipt"
         description="Review the exact findings Codex addressed before marking them In progress."
       >
+        <ol className="receipt-steps" aria-label="Receipt progress">
+          {['Paste receipt', 'Review findings', 'Verify changes'].map((step, index) => (
+            <li
+              key={step}
+              aria-current={index === (applied !== null ? 2 : receipt ? 1 : 0) ? 'step' : undefined}
+            >
+              {index + 1}. {step}
+            </li>
+          ))}
+        </ol>
         {applied !== null ? (
           <div className="stack-form">
             <h3 ref={heading} tabIndex={-1}>
@@ -200,7 +211,10 @@ export function FixReceiptDialog({
               </p>
             )}
             <div className="dialog-actions receipt-actions">
-              <Button disabled={pending || !text.trim()}>Preview findings</Button>
+              <Button disabled={pending || !text.trim()}>
+                {pending && <LoaderCircle size={16} className="spin" />}
+                {pending ? 'Checking receipt…' : 'Preview findings'}
+              </Button>
             </div>
           </form>
         ) : (
@@ -271,7 +285,8 @@ export function FixReceiptDialog({
                 Back to receipt
               </Button>
               <Button disabled={pending || !selected.length} onClick={() => void confirm()}>
-                Mark {selected.length} In progress
+                {pending && <LoaderCircle size={16} className="spin" />}
+                {pending ? 'Saving selection…' : `Mark ${selected.length} In progress`}
               </Button>
             </div>
           </div>

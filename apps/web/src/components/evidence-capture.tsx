@@ -1,4 +1,6 @@
-import { ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ExternalLink, ImageOff, Focus, Maximize2 } from 'lucide-react';
+import { Button } from './ui/primitives';
 
 type Dimensions = { width: number; height: number };
 type Box = Dimensions & { x: number; y: number };
@@ -20,6 +22,12 @@ export function EvidenceCapture({
   boxes: (Box | null | undefined)[];
   focusElement: boolean;
 }) {
+  const [fullPage, setFullPage] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFullPage(false);
+    setFailed(false);
+  }, [src]);
   const width = dimensions?.width ?? 0;
   const height = dimensions?.height ?? 0;
   const scale = afterScroll ? 1 : (deviceScale ?? 1);
@@ -43,45 +51,82 @@ export function EvidenceCapture({
         box.x + box.width <= width &&
         box.y + box.height <= height,
     );
-  const target = focusElement ? valid[0] : null;
+  const target = focusElement && !fullPage ? valid[0] : null;
   const left = target ? Math.max(0, target.x - 96) : 0;
   const top = target ? Math.max(0, target.y - 64) : 0;
   const right = target ? Math.min(width, target.x + target.width + 96) : width;
   const bottom = target ? Math.min(height, target.y + target.height + 64) : height;
   return (
     <figure className="capture-figure">
-      <div className="screenshot" tabIndex={0} role="region" aria-label="Captured screenshot">
-        {valid.length > 0 ? (
-          <svg
-            className={target ? 'capture-context' : undefined}
-            viewBox={[left, top, right - left, bottom - top].join(' ')}
-            role="img"
-            aria-label={
-              target
-                ? 'Highlighted element in the capture of ' + title
-                : 'Highlighted finding locations on ' + title
-            }
+      {focusElement && valid.length > 0 && !failed && (
+        <div className="capture-controls" aria-label="Capture view">
+          <Button
+            variant="outline"
+            size="sm"
+            aria-pressed={!fullPage}
+            onClick={() => setFullPage(false)}
           >
-            <image href={src} width={width} height={height} />
-            {valid.map((box, index) => (
-              <g key={index} fill="none">
-                <rect {...box} stroke="white" strokeWidth={5} vectorEffect="non-scaling-stroke" />
-                <rect
-                  {...box}
-                  stroke="#1d4ed8"
-                  strokeWidth={2.5}
-                  vectorEffect="non-scaling-stroke"
-                />
-              </g>
-            ))}
-          </svg>
-        ) : (
-          <img src={src} alt={'Captured page evidence for ' + title} loading="lazy" />
-        )}
-      </div>
+            <Focus size={14} />
+            Element
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-pressed={fullPage}
+            onClick={() => setFullPage(true)}
+          >
+            <Maximize2 size={14} />
+            Full page
+          </Button>
+        </div>
+      )}
+      {failed ? (
+        <div className="evidence-empty" role="status">
+          <ImageOff size={24} />
+          <p>The saved capture could not be loaded.</p>
+          <Button variant="outline" size="sm" onClick={() => setFailed(false)}>
+            Retry capture
+          </Button>
+        </div>
+      ) : (
+        <div className="screenshot" tabIndex={0} role="region" aria-label="Captured screenshot">
+          {valid.length > 0 ? (
+            <svg
+              className={target ? 'capture-context' : undefined}
+              viewBox={[left, top, right - left, bottom - top].join(' ')}
+              role="img"
+              aria-label={
+                target
+                  ? 'Highlighted element in the capture of ' + title
+                  : 'Highlighted finding locations on ' + title
+              }
+            >
+              <image href={src} width={width} height={height} onError={() => setFailed(true)} />
+              {valid.map((box, index) => (
+                <g key={index} fill="none">
+                  <rect {...box} stroke="white" strokeWidth={5} vectorEffect="non-scaling-stroke" />
+                  <rect
+                    {...box}
+                    className="capture-highlight"
+                    strokeWidth={2.5}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              ))}
+            </svg>
+          ) : (
+            <img
+              src={src}
+              alt={'Captured page evidence for ' + title}
+              loading="lazy"
+              onError={() => setFailed(true)}
+            />
+          )}
+        </div>
+      )}
       <figcaption className="capture-caption">
         <span>
-          {target ? 'Element in context' : 'Full page'}
+          {failed ? 'Capture unavailable' : target ? 'Element in context' : 'Full page'}
           {afterScroll && ' · Captured after scrolling'}
         </span>
         <a className="text-link small" href={src} target="_blank" rel="noreferrer">

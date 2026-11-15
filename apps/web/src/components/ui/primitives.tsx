@@ -48,8 +48,10 @@ export function Dialog({
   title,
   description,
   children,
+  className,
 }: {
   open: boolean;
+  className?: string;
   onOpenChange: (v: boolean) => void;
   title: string;
   description: string;
@@ -61,7 +63,7 @@ export function Dialog({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="dialog-overlay" />
         <DialogPrimitive.Content
-          className="dialog-content"
+          className={cn('dialog-content', className)}
           onOpenAutoFocus={() => {
             returnFocus.current =
               document.activeElement instanceof HTMLElement ? document.activeElement : null;

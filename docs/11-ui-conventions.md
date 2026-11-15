@@ -1,39 +1,41 @@
 # 11 UI conventions and visual direction
 
 ## Direction
-Paul selected a modern light-mode shadcn UI for a useful internal client-work tool that is polished enough to show in interviews. No Figma dependency and no separate demo design.
+Updated 2026-11-15. Paul requested the [Apple design skill](https://www.ui-skills.com/skills/emilkowalski/apple-design) and supplied a charcoal, cyan, mint and coral palette. Keep the existing light-mode internal workbench and Radix/shadcn-style components. No Figma dependency.
 
-Use shadcn/ui components with Tailwind and semantic CSS variables. Start from its neutral light palette, then apply the project tokens below. Pin compatible package versions when scaffolding; no dependency install is part of this documentation update. [Official shadcn theming reference](https://ui.shadcn.com/docs/theming).
+Apply the skill through restrained hierarchy, system typography, immediate press feedback, consistent dialog motion and functional translucency. This app has no gesture-driven surfaces requiring springs. Keep menus, tables and native form controls familiar. Avoid motion on route changes or data refreshes.
 
-## Visual tokens (selected starting values)
+## Visual tokens
 | Role | Value |
 |---|---|
-| Canvas | #F8FAFC |
-| Surfaces / popovers | #FFFFFF |
-| Main text | #0F172A |
-| Secondary text | #475569 |
-| Decorative separators | #E2E8F0 |
-| Essential input boundaries | #64748B |
-| Primary action / selected accent | #1D4ED8 with white text |
-| Focus ring | #2563EB, visible offset from the surface |
-| Has error | #991B1B text on #FEF2F2 |
-| In progress | #92400E text on #FFFBEB |
-| Fixed | #166534 text on #F0FDF4 |
-| Not an issue / no issues detected | Neutral text/background; distinguish with explicit words |
+| Canvas / supplied mint | #F7FFF7 |
+| Sidebar and main text / supplied charcoal | #292F36 |
+| Primary action and selected navigation / supplied cyan | #4ECDC4, with charcoal text |
+| Issue accent / supplied coral | #FF6B6B |
+| Panels | #FFFFFF |
+| Secondary text | #58645E |
+| Decorative separators | #DCE5DF |
+| Essential control boundaries | #7B8982 |
+| Links and light-surface focus ring | #176B65 |
+| Sidebar focus ring | #4ECDC4 |
+| Has error | #A23232 on #FFF0EE, coral dot |
+| In progress | #176B65 on #E6F7F3 |
+| Fixed | #29624D on #EAF6EE |
+| Not an issue / no issues detected | Neutral text/background with explicit words |
 
-These are design inputs, not a claim that every combination passes contrast. Verify actual text, controls, focus and hover states during the build. Decorative borders must not be the only identifying boundary for controls.
+Bright cyan and coral are accents. Darker related tones provide legible text and control edges on light surfaces. Keep text labels on every workflow status. Engine confidence, triage and severity remain neutral read-only pills.
 
-- System sans-serif font stack, 14px table/control text, 16px prose, 24-28px page headings. Code uses a system monospace stack. No remote font dependency.
-- 4px spacing scale; 24-32px page gutters, 16-24px section gaps. 8px control radius, 12px panel radius. Restrained shadows for overlays only.
-- Sidebar about 240px on wide screens. Main content uses available width; keep prose around 75 characters per line. Repeated list headers and action positions stay consistent.
-- Calm white tables, clear header contrast, subtle row hover and compact labeled status counts. Do not wrap every number in a card or use decorative gradients.
-- Use a consistent outline icon family. Icon-only actions need an accessible name and tooltip. Primary action is visually distinct; secondary actions do not compete with it.
-- Engine labels remain neutral read-only pills. Reserve semantic color for workflow statuses and actual feedback messages.
+- Use the platform system sans-serif with relative text sizing. Metadata starts at 12px, table text at 13px, controls at 13px, and large headings at 32px. Headings use tighter tracking. Counts and dates use tabular numerals.
+- Main gutters are 24-36px. Controls use 8-10px radii, panels 16px, and dialogs 20px. Shadows are subtle on panels and stronger on overlays.
+- Use the charcoal sidebar for orientation, a mint canvas, and white content surfaces. Cyan identifies the selected section and primary actions. Group overview metrics into one surface.
+- Top-level lists begin with their controls. The sidebar names the current section; no duplicate visible page headings or breadcrumbs above tables. Preserve semantic hidden h1 headings. Narrow screens show the current section beside the navigation button.
+- Keep genuine tables, explicit entity links and local horizontal scrolling. Show recorded element selectors beneath error names and observed classes or selectors beneath component names.
+- Give press feedback immediately. Dialog entry and exit follow the same short path. Do not delay input for animations. Respect reduced motion, reduced transparency and increased contrast.
 
 ## Components and interaction
 Use shadcn Sidebar/Sheet, Button, Table, Tabs, Select or Native Select, Popover/Checkbox filters, Dialog, Tooltip, Skeleton and Alert patterns as needed. Use real tables and links. Component choice does not replace keyboard and screen-reader verification.
 
-Loading keeps the page structure stable with skeletons. Action errors appear beside the action and preserve inputs. Status changes announce a concise polite live message. Dialogs have a heading, focus management and return focus. Do not announce every polling tick. Respect reduced motion; use brief transitions only.
+Loading keeps the page structure stable with skeletons. Action errors appear beside the action and preserve inputs. Status changes show a dismissible confirmation and announce a concise polite live message. Notifications clear after six seconds. Dialogs have a heading, focus management and return focus. Do not announce every polling tick. Respect reduced motion; use brief transitions only.
 
 ## Wording
 | Avoid | Use |
@@ -60,3 +62,13 @@ Acceptance: keyboard-only operation, visible unobscured focus, logical order, 20
 
 ## Evidence
 Selector/HTML remains readable primary evidence; render captured HTML as text. One immutable compressed image per page per scan. Draw bbox overlays only on the matching capture with known scale; otherwise show the full image. Do not ship images from engine filesystem paths in the UI runtime.
+
+## Workflow refinements
+- Filters close on Escape or an outside pointer action. Escape returns focus to the filter trigger.
+- Brief selection supports selecting eligible rows on the visible page. The count explicitly includes selections on other pages and behind filters.
+- Receipts show Paste receipt, Review findings and Verify changes as distinct steps. Preview never changes findings. Confirmation still rechecks eligibility on the server.
+- Matching boxed evidence offers Element and Full page views. Missing coordinates continue to show full-page evidence. Failed image loads show an explanation and retry.
+- PDF downloads validate both the response type and PDF signature. Engine errors stay in the app and leave the scan available for review.
+- Reconnect reloads the site index as well as current evidence. Delayed requests for a previous site cannot replace the currently selected workspace.
+
+Verification details are recorded in `17-design-and-flow-review.md`.
