@@ -77,9 +77,11 @@ export function FixBriefDownload({
 export function FixReceiptDialog({
   siteId,
   onApplied,
+  size = 'sm',
 }: {
   siteId: string;
   onApplied: (count: number) => void;
+  size?: 'sm' | 'default';
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
@@ -153,7 +155,7 @@ export function FixReceiptDialog({
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => changeOpen(true)}>
+      <Button variant="outline" size={size} onClick={() => changeOpen(true)}>
         Paste fix receipt
       </Button>
       <Dialog
@@ -195,10 +197,23 @@ export function FixReceiptDialog({
           </div>
         ) : !receipt ? (
           <form className="stack-form" onSubmit={preview}>
+            <p id="fix-receipt-help" className="muted">
+              Paste the JSON receipt your AI returned for a Fix brief. It includes the brief ID and
+              finding references. If you worked from a PDF, match your AI summary to findings in{' '}
+              <Link
+                className="text-link"
+                to={'/sites/' + siteId + '/errors?status=has_error'}
+                onClick={() => changeOpen(false)}
+              >
+                Errors
+              </Link>{' '}
+              and mark the ones you addressed In progress.
+            </p>
             <label>
               Receipt JSON
               <textarea
                 rows={7}
+                aria-describedby="fix-receipt-help"
                 value={text}
                 onChange={(event) => setText(event.target.value)}
                 maxLength={200000}

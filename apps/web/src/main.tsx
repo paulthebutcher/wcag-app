@@ -201,6 +201,10 @@ function App() {
         setLoadError((e as Error).message);
     }
   }
+  function onReceiptApplied(count: number) {
+    setMessage(count + ' marked In progress');
+    void refresh();
+  }
   async function loadIndex() {
     try {
       const [s, health] = await Promise.all([
@@ -446,6 +450,7 @@ function App() {
                 id={id}
                 action={action}
                 busy={busy}
+                onReceiptApplied={onReceiptApplied}
               />
             ) : kind === 'overview' ? (
               <Overview
@@ -496,10 +501,7 @@ function App() {
                   key={workspace.site.id + ':' + kind}
                   w={workspace}
                   kind={kind}
-                  onReceiptApplied={(count) => {
-                    setMessage(count + ' marked In progress');
-                    void refresh();
-                  }}
+                  onReceiptApplied={onReceiptApplied}
                   rows={(workspace as any)[kind]}
                   action={action}
                 />
@@ -1442,12 +1444,14 @@ function Detail({
   id,
   action,
   busy,
+  onReceiptApplied,
 }: {
   w: Workspace;
   kind: string;
   id: string;
   action: Action;
   busy: boolean;
+  onReceiptApplied: (count: number) => void;
 }) {
   const e = ((w as any)[kind] as Entity[]).find((x) => x.id === id);
   const [params, setParams] = useSearchParams(),
@@ -1713,6 +1717,9 @@ function Detail({
         )}
         {kind === 'scans' && e.state === 'completed' && e.provenance?.kind === 'engine' && (
           <ScanReportDownload siteId={w.site.id} scanId={id} />
+        )}
+        {kind === 'scans' && e.state === 'completed' && (
+          <FixReceiptDialog siteId={w.site.id} onApplied={onReceiptApplied} size="default" />
         )}
       </div>
       <Tabs.Root
@@ -2163,7 +2170,10 @@ function Detail({
                             )}
                           </td>
                           <td>{label(c.category)}</td>
-                          <td>{label(c.outcome ?? c.category)}</td>
+                          <td>
+                            {label(c.outcome ?? c.category)}
+                            {c.reason && <small>{c.reason}</small>}
+                          </td>
                         </tr>
                       );
                     })}
@@ -2375,6 +2385,11 @@ function ScanOverview({
 }) {
   const metadata = scan.metadata ?? {},
     manifest = metadata.detection_manifest ?? {};
+  const captured = scan.coverage?.captured_urls ?? metadata.captured_urls;
+  const exclusions = scan.coverage?.exclusions ?? metadata.excluded_urls ?? [];
+  const blockedByRobots = exclusions.some(
+    (exclusion: Entity) => exclusion.reason === 'robots_disallowed',
+  );
   return (
     <>
       <Panel title="Scan summary">
@@ -2389,6 +2404,22 @@ function ScanOverview({
                   <span>{label(k)}</span>
                 </Link>
               ))}
+            </div>
+          )}
+          {scan.state === 'completed' && captured?.length === 0 && (
+            <div className="alert">
+              <Info size={18} aria-hidden="true" />
+              <div>
+                <strong>No pages captured</strong>
+                <p>
+                  {blockedByRobots
+                    ? 'The site’s robots.txt blocked requested pages.'
+                    : 'The scan finished without capturing a page.'}{' '}
+                  <Link className="text-link" to={`${base}/scans/${scan.id}?tab=coverage`}>
+                    View coverage
+                  </Link>
+                </p>
+              </div>
             </div>
           )}
           {(scan.failure_message || scan.state === 'failed') && (
@@ -2430,9 +2461,16 @@ function ScanOverview({
             </dd>
             <dt>Engine</dt>
             <dd>{scan.engine_version ?? metadata.engine_version ?? 'Not recorded'}</dd>
+            <dt>Pages captured</dt>
+            <dd>{captured?.length ?? 'Not recorded'}</dd>
             <dt>Check tiers</dt>
             <dd>
-              {(manifest.active_tiers ?? manifest.enabled_tiers ?? []).join(', ') || 'Not recorded'}
+              {(
+                manifest.active_tiers ??
+                manifest.enabled_tiers ??
+                metadata.resolved_options?.tiers ??
+                []
+              ).join(', ') || 'Not recorded'}
             </dd>
             <dt>Model mode</dt>
             <dd>

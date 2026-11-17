@@ -239,7 +239,10 @@ test('a fix brief receipt previews exact rows and verifies only the confirmed se
   expect(brief).toContain('## F-002');
   await page.getByRole('button', { name: 'Close dialog' }).click();
 
+  const scan = current.scans.find((scan: any) => scan.state === 'completed');
+  await page.goto(base + '/scans/' + scan.id);
   await page.getByRole('button', { name: 'Paste fix receipt' }).click();
+  await expect(page.getByLabel('Receipt JSON')).toHaveAccessibleDescription(/brief ID/);
   const receipt = {
     brief_id: briefId,
     addressed: [{ id: 'F-001', note: 'Updated the markup' }, { id: 'F-002' }, { id: 'F-999' }],
